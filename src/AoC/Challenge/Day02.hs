@@ -58,14 +58,14 @@ isPossible (V3 r g b) = r <= 12 && g <= 13 && b <= 14
 
 partA :: [Game] -> Int
 partA =
-  sum . map fst . filter (\(_, ps) -> all isPossible ps)
+  sum . fmap fst . filter (\(_, ps) -> all isPossible ps)
 
 day02a :: Solution [Game] Int
 day02a = Solution {sParse = parseInput, sShow = show, sSolve = Right . partA}
 
 partB :: [Game] -> Int
 partB =
-  sum . map (product . foldr (liftA2 max) (V3 0 0 0) . snd)
+  sum . fmap (product . foldr (liftA2 max) (V3 0 0 0) . snd)
 
 day02b :: Solution [Game] Int
 day02b = Solution {sParse = parseInput, sShow = show, sSolve = Right . partB}
