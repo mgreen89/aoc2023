@@ -1,20 +1,15 @@
-{-# LANGUAGE PartialTypeSignatures #-}
-{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
-{-# OPTIONS_GHC -Wno-unused-imports #-}
-{-# OPTIONS_GHC -Wno-unused-top-binds #-}
-
-module AoC.Challenge.Day01 (
-  day01a
+module AoC.Challenge.Day01
+  ( day01a,
+    day01b,
   )
 where
 
--- , day01b
-
 import AoC.Solution
-import Data.Char (isDigit, digitToInt)
-import Data.Maybe (mapMaybe)
-import Safe (headMay, lastMay)
 import AoC.Util (maybeToEither)
+import Data.Char (digitToInt, isDigit)
+import Data.List (isPrefixOf, tails)
+import Data.Maybe (listToMaybe, mapMaybe)
+import Safe (headMay, lastMay)
 
 getVal :: [Int] -> Maybe Int
 getVal xs =
@@ -25,12 +20,46 @@ digitToIntMay c
   | isDigit c = Just $ digitToInt c
   | otherwise = Nothing
 
-partA :: [String] -> Maybe Int
-partA =
-  fmap sum . traverse (getVal . mapMaybe digitToIntMay)
+digitLookup :: [(String, Int)]
+digitLookup =
+  [(show x, x) | x <- [0 .. 9]]
+    ++ [ ("zero", 0),
+         ("one", 1),
+         ("two", 2),
+         ("three", 3),
+         ("four", 4),
+         ("five", 5),
+         ("six", 6),
+         ("seven", 7),
+         ("eight", 8),
+         ("nine", 9)
+       ]
+
+firstJust :: (a -> Maybe b) -> [a] -> Maybe b
+firstJust f = listToMaybe . mapMaybe f
+
+strToIntMay :: String -> Maybe Int
+strToIntMay inp =
+  firstJust (\(s, v) -> if s `isPrefixOf` inp then Just v else Nothing) digitLookup
 
 day01a :: Solution [String] Int
-day01a = Solution{sParse = Right . lines, sShow = show, sSolve = maybeToEither "Invalid line" . partA}
+day01a =
+  Solution
+    { sParse = Right . lines,
+      sShow = show,
+      sSolve =
+        maybeToEither "Invalid line"
+          . fmap sum
+          . traverse (getVal . mapMaybe digitToIntMay)
+    }
 
-day01b :: Solution _ _
-day01b = Solution{sParse = Right, sShow = show, sSolve = Right}
+day01b :: Solution [String] Int
+day01b =
+  Solution
+    { sParse = Right . lines,
+      sShow = show,
+      sSolve =
+        maybeToEither "Invalid line"
+          . fmap sum
+          . traverse (getVal . mapMaybe strToIntMay . tails)
+    }

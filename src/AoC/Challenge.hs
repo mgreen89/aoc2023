@@ -77,7 +77,7 @@ challengeMap =
 solutionList :: [(Day, (Part, SomeSolution))]
 solutionList =
     [ (mkDay_ 1, (Part1, SomeSolution day01a))
---  , (mkDay_ 1, (Part2, SomeSolution day01b))
+    , (mkDay_ 1, (Part2, SomeSolution day01b))
     , (mkDay_ 2, (Part1, SomeSolution day02a))
     , (mkDay_ 2, (Part2, SomeSolution day02b))
 --  , (mkDay_ 3, (Part1, SomeSolution day03a))
