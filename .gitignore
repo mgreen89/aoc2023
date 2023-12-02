@@ -1,0 +1,8 @@
+.aoc-cfg.yaml
+.stack-work/
+*.cabal
+*.lock
+*~
+/data/**
+!/data/test
+!/data/test/**
