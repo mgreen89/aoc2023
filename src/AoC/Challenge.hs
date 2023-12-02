@@ -75,10 +75,11 @@ challengeMap =
 
 -- | List of all the completed solutions.
 solutionList :: [(Day, (Part, SomeSolution))]
-solutionList = []
+solutionList =
+    [
 --  [ (mkDay_ 1, (Part1, SomeSolution day01a))
 --  , (mkDay_ 1, (Part2, SomeSolution day01b))
---  , (mkDay_ 2, (Part1, SomeSolution day02a))
+      (mkDay_ 2, (Part1, SomeSolution day02a))
 --  , (mkDay_ 2, (Part2, SomeSolution day02b))
 --  , (mkDay_ 3, (Part1, SomeSolution day03a))
 --  , (mkDay_ 3, (Part2, SomeSolution day03b))
@@ -125,7 +126,7 @@ solutionList = []
 --  , (mkDay_ 24, (Part1, SomeSolution day24a))
 --  , (mkDay_ 24, (Part2, SomeSolution day24b))
 --  , (mkDay_ 25, (Part1, SomeSolution day25a))
---  ]
+    ]
 
 -- | Get a map of the completed solution parts for the given day.
 getDay :: ChallengeMap -> Day -> Either String (Map Part SomeSolution)
