@@ -6,6 +6,7 @@ where
 
 import AoC.Solution
 import AoC.Util (maybeToEither)
+import Control.Monad (guard)
 import Data.Char (digitToInt, isDigit)
 import Data.List (isPrefixOf, tails)
 import Data.Maybe (listToMaybe, mapMaybe)
@@ -40,7 +41,7 @@ firstJust f = listToMaybe . mapMaybe f
 
 strToIntMay :: String -> Maybe Int
 strToIntMay inp =
-  firstJust (\(s, v) -> if s `isPrefixOf` inp then Just v else Nothing) digitLookup
+  firstJust (\(s, v) -> v <$ guard (s `isPrefixOf` inp)) digitLookup
 
 day01a :: Solution [String] Int
 day01a =
