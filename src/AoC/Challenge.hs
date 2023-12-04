@@ -83,7 +83,7 @@ solutionList =
     , (mkDay_ 3, (Part1, SomeSolution day03a))
     , (mkDay_ 3, (Part2, SomeSolution day03b))
     , (mkDay_ 4, (Part1, SomeSolution day04a))
---  , (mkDay_ 4, (Part2, SomeSolution day04b))
+    , (mkDay_ 4, (Part2, SomeSolution day04b))
 --  , (mkDay_ 5, (Part1, SomeSolution day05a))
 --  , (mkDay_ 5, (Part2, SomeSolution day05b))
 --  , (mkDay_ 6, (Part1, SomeSolution day06a))
