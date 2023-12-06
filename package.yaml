@@ -29,6 +29,7 @@ dependencies:
   - containers
   - criterion
   - data-default-class
+  - data-interval
   - deepseq
   - directory
   - filepath
