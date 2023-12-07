@@ -1,0 +1,313 @@
+digest                           > configure
+digest                           > Configuring digest-0.0.1.7...
+digest                           > Error: Cabal-simple_6HauvNHV_3.8.1.0_ghc-9.4.7: The program 'pkg-config'
+digest                           > version >=0.9.0 is required but it could not be found.
+digest                           > 
+ansi-wl-pprint                   > configure
+ansi-wl-pprint                   > Configuring ansi-wl-pprint-0.6.9...
+ansi-wl-pprint                   > build
+async                            > configure
+ansi-wl-pprint                   > Preprocessing library for ansi-wl-pprint-0.6.9..
+ansi-wl-pprint                   > Building library for ansi-wl-pprint-0.6.9..
+ansi-wl-pprint                   > [1 of 2] Compiling Text.PrettyPrint.ANSI.Leijen.Internal
+ansi-wl-pprint                   > 
+ansi-wl-pprint                   > /private/var/folders/d3/7k25m9bd75s9sg4p63cfts3m0000gn/T/stack-6e8332a206579889/ansi-wl-pprint-0.6.9/Text/PrettyPrint/ANSI/Leijen/Internal.hs:34:1: warning: [-Wunused-imports]
+ansi-wl-pprint                   >     The import of ‘Data.Monoid’ is redundant
+ansi-wl-pprint                   >       except perhaps to import instances from ‘Data.Monoid’
+ansi-wl-pprint                   >     To import instances alone, use: import Data.Monoid()
+ansi-wl-pprint                   >    |
+ansi-wl-pprint                   > 34 | import Data.Monoid ((<>))
+ansi-wl-pprint                   >    | ^^^^^^^^^^^^^^^^^^^^^^^^^
+async                            > Configuring async-2.2.4...
+async                            > build
+case-insensitive                 > configure
+ansi-wl-pprint                   > [2 of 2] Compiling Text.PrettyPrint.ANSI.Leijen
+ansi-wl-pprint                   > 
+ansi-wl-pprint                   > /private/var/folders/d3/7k25m9bd75s9sg4p63cfts3m0000gn/T/stack-6e8332a206579889/ansi-wl-pprint-0.6.9/Text/PrettyPrint/ANSI/Leijen.hs:164:1: warning: [-Wunused-imports]
+ansi-wl-pprint                   >     The import of ‘Data.Monoid’ is redundant
+ansi-wl-pprint                   >       except perhaps to import instances from ‘Data.Monoid’
+ansi-wl-pprint                   >     To import instances alone, use: import Data.Monoid()
+ansi-wl-pprint                   >     |
+ansi-wl-pprint                   > 164 | import Data.Monoid ((<>))
+ansi-wl-pprint                   >     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+async                            > Preprocessing library for async-2.2.4..
+async                            > Building library for async-2.2.4..
+async                            > [1 of 1] Compiling Control.Concurrent.Async
+ansi-wl-pprint                   > ld: warning: -single_module is obsolete
+async                            > 
+async                            > /private/var/folders/d3/7k25m9bd75s9sg4p63cfts3m0000gn/T/stack-6e8332a206579889/async-2.2.4/Control/Concurrent/Async.hs:215:1: warning: [-Wunused-imports]
+async                            >     The import of ‘Data.Semigroup’ is redundant
+async                            >       except perhaps to import instances from ‘Data.Semigroup’
+async                            >     To import instances alone, use: import Data.Semigroup()
+async                            >     |
+async                            > 215 | import Data.Semigroup (Semigroup((<>)))
+async                            >     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ansi-wl-pprint                   > copy/register
+ansi-wl-pprint                   > Installing library in /Users/matgreen/.stack/snapshots/aarch64-osx/48fb795e000b835a7b00e7f5546747e4d954eaa78ffd2dd5f21d7dbd5b96fd76/9.4.7/lib/aarch64-osx-ghc-9.4.7/ansi-wl-pprint-0.6.9-1dhreIZRWul97Th3vwihhQ
+ansi-wl-pprint                   > Registering library for ansi-wl-pprint-0.6.9..
+case-insensitive                 > Configuring case-insensitive-1.2.1.0...
+case-insensitive                 > build
+data-fix                         > configure
+case-insensitive                 > Preprocessing library for case-insensitive-1.2.1.0..
+case-insensitive                 > Building library for case-insensitive-1.2.1.0..
+case-insensitive                 > [1 of 3] Compiling Data.CaseInsensitive.Internal
+async                            > ld: warning: -single_module is obsolete
+case-insensitive                 > 
+case-insensitive                 > /private/var/folders/d3/7k25m9bd75s9sg4p63cfts3m0000gn/T/stack-6e8332a206579889/case-insensitive-1.2.1.0/Data/CaseInsensitive/Internal.hs:124:5: warning: [-Wnoncanonical-monoid-instances]
+case-insensitive                 >     Noncanonical ‘mappend’ definition detected
+case-insensitive                 >     in the instance declaration for ‘Monoid (CI s)’.
+case-insensitive                 >     ‘mappend’ will eventually be removed in favour of ‘(<>)’
+case-insensitive                 >     Either remove definition for ‘mappend’ (recommended) or define as ‘mappend = (<>)’
+case-insensitive                 >     See also: https://gitlab.haskell.org/ghc/ghc/-/wikis/proposal/semigroup-monoid
+case-insensitive                 >     |
+case-insensitive                 > 124 |     CI o1 l1 `mappend` CI o2 l2 = CI (o1 `mappend` o2) (l1 `mappend` l2)
+case-insensitive                 >     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+async                            > copy/register
+async                            > Installing library in /Users/matgreen/.stack/snapshots/aarch64-osx/48fb795e000b835a7b00e7f5546747e4d954eaa78ffd2dd5f21d7dbd5b96fd76/9.4.7/lib/aarch64-osx-ghc-9.4.7/async-2.2.4-9AvInezNcKbBf0QQfwLW1a
+data-fix                         > Configuring data-fix-0.3.2...
+async                            > Registering library for async-2.2.4..
+data-fix                         > build
+extended-reals                   > configure
+data-fix                         > Preprocessing library for data-fix-0.3.2..
+data-fix                         > Building library for data-fix-0.3.2..
+data-fix                         > [1 of 1] Compiling Data.Fix
+case-insensitive                 > [2 of 3] Compiling Data.CaseInsensitive
+case-insensitive                 > [3 of 3] Compiling Data.CaseInsensitive.Unsafe
+extended-reals                   > Configuring extended-reals-0.2.4.0...
+case-insensitive                 > ld: warning: -single_module is obsolete
+case-insensitive                 > copy/register
+case-insensitive                 > Installing library in /Users/matgreen/.stack/snapshots/aarch64-osx/48fb795e000b835a7b00e7f5546747e4d954eaa78ffd2dd5f21d7dbd5b96fd76/9.4.7/lib/aarch64-osx-ghc-9.4.7/case-insensitive-1.2.1.0-I5JKw6yw8s5Aud58lT8I5K
+extended-reals                   > build
+memory                           > configure
+case-insensitive                 > Registering library for case-insensitive-1.2.1.0..
+extended-reals                   > Preprocessing library for extended-reals-0.2.4.0..
+extended-reals                   > Building library for extended-reals-0.2.4.0..
+data-fix                         > ld: warning: -single_module is obsolete
+extended-reals                   > [1 of 1] Compiling Data.ExtendedReal
+data-fix                         > copy/register
+data-fix                         > Installing library in /Users/matgreen/.stack/snapshots/aarch64-osx/48fb795e000b835a7b00e7f5546747e4d954eaa78ffd2dd5f21d7dbd5b96fd76/9.4.7/lib/aarch64-osx-ghc-9.4.7/data-fix-0.3.2-16vfiWTl4Yv5mYP5g3RsE6
+extended-reals                   > 
+extended-reals                   > /private/var/folders/d3/7k25m9bd75s9sg4p63cfts3m0000gn/T/stack-6e8332a206579889/extended-reals-0.2.4.0/src/Data/ExtendedReal.hs:40:1: warning: [-Wunused-imports]
+extended-reals                   >     The import of ‘Data.Typeable’ is redundant
+extended-reals                   >       except perhaps to import instances from ‘Data.Typeable’
+extended-reals                   >     To import instances alone, use: import Data.Typeable()
+extended-reals                   >    |
+extended-reals                   > 40 | import Data.Typeable
+extended-reals                   >    | ^^^^^^^^^^^^^^^^^^^^
+data-fix                         > Registering library for data-fix-0.3.2..
+memory                           > Configuring memory-0.18.0...
+extended-reals                   > ld: warning: -single_module is obsolete
+memory                           > build
+mime-types                       > configure
+extended-reals                   > copy/register
+extended-reals                   > Installing library in /Users/matgreen/.stack/snapshots/aarch64-osx/48fb795e000b835a7b00e7f5546747e4d954eaa78ffd2dd5f21d7dbd5b96fd76/9.4.7/lib/aarch64-osx-ghc-9.4.7/extended-reals-0.2.4.0-EKWrpyzrTyt2B1hKkn8L0H
+memory                           > Preprocessing library for memory-0.18.0..
+extended-reals                   > Registering library for extended-reals-0.2.4.0..
+memory                           > Building library for memory-0.18.0..
+mime-types                       > Configuring mime-types-0.1.2.0...
+mime-types                       > build
+monad-loops                      > configure
+mime-types                       > Preprocessing library for mime-types-0.1.2.0..
+mime-types                       > Building library for mime-types-0.1.2.0..
+memory                           > [ 1 of 28] Compiling Data.Memory.ExtendedWords
+mime-types                       > [1 of 1] Compiling Network.Mime
+memory                           > [ 2 of 28] Compiling Data.Memory.Internal.Compat
+memory                           > [ 3 of 28] Compiling Data.Memory.Endian
+memory                           > [ 4 of 28] Compiling Data.Memory.Hash.SipHash
+monad-loops                      > Configuring monad-loops-0.4.3...
+memory                           > [ 5 of 28] Compiling Data.Memory.Encoding.Base32
+monad-loops                      > build
+network                          > configure
+monad-loops                      > Preprocessing library for monad-loops-0.4.3..
+monad-loops                      > Building library for monad-loops-0.4.3..
+network                          > [1 of 3] Compiling Main             ( /private/var/folders/d3/7k25m9bd75s9sg4p63cfts3m0000gn/T/stack-6e8332a206579889/network-3.1.4.0/Setup.hs, /private/var/folders/d3/7k25m9bd75s9sg4p63cfts3m0000gn/T/stack-6e8332a206579889/network-3.1.4.0/.stack-work/dist/aarch64-osx/Cabal-3.8.1.0/setup/Main.o )
+memory                           > [ 6 of 28] Compiling Data.Memory.Encoding.Base16
+monad-loops                      > [1 of 1] Compiling Control.Monad.Loops
+network                          > [2 of 3] Compiling StackSetupShim   ( /Users/matgreen/.stack/setup-exe-src/setup-shim-6HauvNHV.hs, /private/var/folders/d3/7k25m9bd75s9sg4p63cfts3m0000gn/T/stack-6e8332a206579889/network-3.1.4.0/.stack-work/dist/aarch64-osx/Cabal-3.8.1.0/setup/StackSetupShim.o )
+memory                           > [ 7 of 28] Compiling Data.Memory.Internal.CompatPrim
+network                          > [3 of 3] Linking /private/var/folders/d3/7k25m9bd75s9sg4p63cfts3m0000gn/T/stack-6e8332a206579889/network-3.1.4.0/.stack-work/dist/aarch64-osx/Cabal-3.8.1.0/setup/setup
+memory                           > [ 8 of 28] Compiling Data.Memory.Internal.CompatPrim64
+memory                           > 
+memory                           > /private/var/folders/d3/7k25m9bd75s9sg4p63cfts3m0000gn/T/stack-6e8332a206579889/memory-0.18.0/Data/Memory/Internal/CompatPrim64.hs:58:1: warning: [-Wunused-top-binds]
+memory                           >     Defined but not used: type constructor or class ‘OutBool’
+memory                           >    |
+memory                           > 58 | type OutBool = Int#
+memory                           >    | ^^^^^^^^^^^^^^^^^^^
+memory                           > [ 9 of 28] Compiling Data.Memory.Internal.DeepSeq
+network                          > ld: warning: ignoring duplicate libraries: '-lm'
+memory                           > [10 of 28] Compiling Data.Memory.Internal.Imports
+memory                           > [11 of 28] Compiling Data.Memory.Hash.FNV
+memory                           > [12 of 28] Compiling Data.Memory.Encoding.Base64
+monad-loops                      > ld: warning: -single_module is obsolete
+memory                           > [13 of 28] Compiling Data.Memory.MemMap.Posix
+monad-loops                      > copy/register
+monad-loops                      > Installing library in /Users/matgreen/.stack/snapshots/aarch64-osx/48fb795e000b835a7b00e7f5546747e4d954eaa78ffd2dd5f21d7dbd5b96fd76/9.4.7/lib/aarch64-osx-ghc-9.4.7/monad-loops-0.4.3-qiUPvdK5TKKvmZxThfyK
+monad-loops                      > Registering library for monad-loops-0.4.3..
+memory                           > [14 of 28] Compiling Data.Memory.PtrMethods
+memory                           > [15 of 28] Compiling Data.ByteArray.Types
+memory                           > [16 of 28] Compiling Data.ByteArray.MemView
+network                          > Configuring network-3.1.4.0...
+memory                           > [17 of 28] Compiling Data.ByteArray.Pack.Internal
+memory                           > [18 of 28] Compiling Data.ByteArray.Hash
+memory                           > [19 of 28] Compiling Data.ByteArray.Sized
+network                          > configure: WARNING: unrecognized options: --with-compiler
+network                          > checking build system type... aarch64-apple-darwin23.1.0
+network                          > checking host system type... aarch64-apple-darwin23.1.0
+network                          > checking for gcc... /usr/bin/gcc
+memory                           > [20 of 28] Compiling Data.ByteArray.ScrubbedBytes
+network                          > checking whether the C compiler works... yes
+network                          > checking for C compiler default output file name... a.out
+network                          > checking for suffix of executables... 
+memory                           > [21 of 28] Compiling Data.ByteArray.Methods
+mime-types                       > ld: warning: -single_module is obsolete
+network                          > checking whether we are cross compiling... no
+network                          > checking for suffix of object files... o
+mime-types                       > copy/register
+mime-types                       > Installing library in /Users/matgreen/.stack/snapshots/aarch64-osx/48fb795e000b835a7b00e7f5546747e4d954eaa78ffd2dd5f21d7dbd5b96fd76/9.4.7/lib/aarch64-osx-ghc-9.4.7/mime-types-0.1.2.0-JIbbi6IgefQJUQINMLdOiP
+network                          > checking whether we are using the GNU C compiler... yes
+network                          > checking whether /usr/bin/gcc accepts -g... yes
+memory                           > [22 of 28] Compiling Data.ByteArray.View
+network                          > checking for /usr/bin/gcc option to accept ISO C89... none needed
+mime-types                       > Registering library for mime-types-0.1.2.0..
+network                          > checking for an ANSI C-conforming const... yes
+memory                           > [23 of 28] Compiling Data.ByteArray.Parse
+network                          > checking how to run the C preprocessor... /usr/bin/gcc -E
+network                          > checking for grep that handles long lines and -e... /usr/bin/grep
+network                          > checking for egrep... /usr/bin/grep -E
+memory                           > [24 of 28] Compiling Data.ByteArray.Mapping
+memory                           > [25 of 28] Compiling Data.ByteArray.Encoding
+network                          > checking for ANSI C header files... yes
+network                          > checking for sys/types.h... yes
+memory                           > [26 of 28] Compiling Data.ByteArray.Bytes
+network                          > checking for sys/stat.h... yes
+network                          > checking for stdlib.h... yes
+memory                           > [27 of 28] Compiling Data.ByteArray
+network                          > checking for string.h... yes
+memory                           > [28 of 28] Compiling Data.ByteArray.Pack
+network                          > checking for memory.h... yes
+network                          > checking for strings.h... yes
+network                          > checking for inttypes.h... yes
+network                          > checking for stdint.h... yes
+memory                           > ld: warning: -single_module is obsolete
+network                          > checking for unistd.h... yes
+network                          > checking limits.h usability... yes
+network                          > checking limits.h presence... yes
+network                          > checking for limits.h... yes
+network                          > checking for stdlib.h... (cached) yes
+network                          > checking for unistd.h... (cached) yes
+memory                           > copy/register
+network                          > checking for sys/types.h... (cached) yes
+memory                           > Installing library in /Users/matgreen/.stack/snapshots/aarch64-osx/48fb795e000b835a7b00e7f5546747e4d954eaa78ffd2dd5f21d7dbd5b96fd76/9.4.7/lib/aarch64-osx-ghc-9.4.7/memory-0.18.0-GcHFIpnoRJKBLy03NaHAg9
+network                          > checking fcntl.h usability... yes
+network                          > checking fcntl.h presence... yes
+network                          > checking for fcntl.h... yes
+memory                           > Registering library for memory-0.18.0..
+network                          > checking sys/uio.h usability... yes
+network                          > checking sys/uio.h presence... yes
+network                          > checking for sys/uio.h... yes
+network                          > checking sys/socket.h usability... yes
+network                          > checking sys/socket.h presence... yes
+network                          > checking for sys/socket.h... yes
+network                          > checking netinet/in.h usability... yes
+network                          > checking netinet/in.h presence... yes
+network                          > checking for netinet/in.h... yes
+network                          > checking netinet/tcp.h usability... yes
+network                          > checking netinet/tcp.h presence... yes
+network                          > checking for netinet/tcp.h... yes
+network                          > checking sys/un.h usability... yes
+network                          > checking sys/un.h presence... yes
+network                          > checking for sys/un.h... yes
+network                          > checking arpa/inet.h usability... yes
+network                          > checking arpa/inet.h presence... yes
+network                          > checking for arpa/inet.h... yes
+network                          > checking netdb.h usability... yes
+network                          > checking netdb.h presence... yes
+network                          > checking for netdb.h... yes
+network                          > checking net/if.h usability... yes
+network                          > checking net/if.h presence... yes
+network                          > checking for net/if.h... yes
+network                          > checking netioapi.h usability... no
+network                          > checking netioapi.h presence... no
+network                          > checking for netioapi.h... no
+network                          > checking for struct ucred... no
+network                          > checking for gai_strerror... yes
+network                          > checking for gethostent... yes
+network                          > checking for accept4... no
+network                          > checking for getpeereid... yes
+network                          > checking whether AI_ADDRCONFIG is declared... yes
+network                          > checking whether AI_ALL is declared... yes
+network                          > checking whether AI_NUMERICSERV is declared... yes
+network                          > checking whether AI_V4MAPPED is declared... yes
+network                          > checking whether IPV6_V6ONLY is declared... yes
+network                          > checking whether IPPROTO_IP is declared... yes
+network                          > checking whether IPPROTO_TCP is declared... yes
+network                          > checking whether IPPROTO_IPV6 is declared... yes
+network                          > checking whether SO_PEERCRED is declared... no
+network                          > checking for struct msghdr.msg_control... yes
+network                          > checking for struct msghdr.msg_accrights... no
+network                          > checking for struct sockaddr.sa_len... yes
+network                          > configure: creating ./network.buildinfo
+network                          > configure: creating ./config.status
+network                          > config.status: creating include/HsNetworkConfig.h
+network                          > configure: WARNING: unrecognized options: --with-compiler
+network                          > build
+network                          > Preprocessing library for network-3.1.4.0..
+network                          > Building library for network-3.1.4.0..
+network                          > [ 1 of 28] Compiling Network.Socket.Imports
+network                          > [ 2 of 28] Compiling Network.Socket.If
+network                          > [ 3 of 28] Compiling Network.Socket.Flag
+network                          > [ 4 of 28] Compiling Network.Socket.Cbits
+network                          > [ 5 of 28] Compiling Network.Socket.Fcntl
+network                          > [ 6 of 28] Compiling Network.Socket.Posix.IOVec
+network                          > [ 7 of 28] Compiling Network.Socket.ReadShow
+network                          > [ 8 of 28] Compiling Network.Socket.Types
+network                          > [ 9 of 28] Compiling Network.Socket.Posix.Cmsg
+network                          > [10 of 28] Compiling Network.Socket.Internal
+network                          > [11 of 28] Compiling Network.Socket.Posix.MsgHdr
+network                          > [12 of 28] Compiling Network.Socket.Posix.CmsgHdr
+network                          > 
+network                          > /private/var/folders/d3/7k25m9bd75s9sg4p63cfts3m0000gn/T/stack-6e8332a206579889/network-3.1.4.0/Network/Socket/Posix/CmsgHdr.hsc:72:9: warning: [-Wdeprecations]
+network                          >     In the use of ‘memcpy’
+network                          >     (imported from Data.ByteString.Internal, but defined in bytestring-0.11.5.2:Data.ByteString.Internal.Type):
+network                          >     Deprecated: "Use Foreign.Marshal.Utils.copyBytes instead"
+network                          >    |
+network                          > 72 |         memcpy dst src len
+network                          >    |         ^^^^^^
+network                          > 
+network                          > /private/var/folders/d3/7k25m9bd75s9sg4p63cfts3m0000gn/T/stack-6e8332a206579889/network-3.1.4.0/Network/Socket/Posix/CmsgHdr.hsc:91:66: warning: [-Wdeprecations]
+network                          >     In the use of ‘memcpy’
+network                          >     (imported from Data.ByteString.Internal, but defined in bytestring-0.11.5.2:Data.ByteString.Internal.Type):
+network                          >     Deprecated: "Use Foreign.Marshal.Utils.copyBytes instead"
+network                          >    |
+network                          > 91 |     Cmsg (CmsgId lvl typ) <$> create (fromIntegral siz) (\dst -> memcpy dst src siz)
+network                          >    |                                                                  ^^^^^^
+network                          > [13 of 28] Compiling Network.Socket.Options
+network                          > [14 of 28] Compiling Network.Socket.Syscall
+network                          > [15 of 28] Compiling Network.Socket.Name
+network                          > [16 of 28] Compiling Network.Socket.Info
+network                          > [17 of 28] Compiling Network.Socket.Handle
+network                          > [18 of 28] Compiling Network.Socket.ByteString.Internal
+network                          > [19 of 28] Compiling Network.Socket.Buffer
+network                          > [20 of 28] Compiling Network.Socket.SockAddr
+network                          > [21 of 28] Compiling Network.Socket.Shutdown
+network                          > [22 of 28] Compiling Network.Socket.ByteString.IO
+network                          > [23 of 28] Compiling Network.Socket.ByteString.Lazy.Posix
+network                          > [24 of 28] Compiling Network.Socket.ByteString
+network                          > [25 of 28] Compiling Network.Socket.Address
+network                          > [26 of 28] Compiling Network.Socket.Unix
+network                          > [27 of 28] Compiling Network.Socket
+network                          > [28 of 28] Compiling Network.Socket.ByteString.Lazy
+network                          > ld: warning: -single_module is obsolete
+network                          > copy/register
+network                          > Installing library in /Users/matgreen/.stack/snapshots/aarch64-osx/48fb795e000b835a7b00e7f5546747e4d954eaa78ffd2dd5f21d7dbd5b96fd76/9.4.7/lib/aarch64-osx-ghc-9.4.7/network-3.1.4.0-1MR9fXYlwcl2jS9T30L6Pn
+network                          > Registering library for network-3.1.4.0..
+
+Error: [S-7282]
+       Stack failed to execute the build plan.
+       
+       While executing the build plan, Stack encountered the error:
+       
+       [S-7011]
+       While building package digest-0.0.1.7 (scroll up to its section to see the error) using:
+       /Users/matgreen/.stack/setup-exe-cache/aarch64-osx/Cabal-simple_6HauvNHV_3.8.1.0_ghc-9.4.7 --verbose=1 --builddir=.stack-work/dist/aarch64-osx/Cabal-3.8.1.0 configure --with-ghc=/Users/matgreen/.ghcup/ghc/9.4.7/bin/ghc-9.4.7 --with-ghc-pkg=/Users/matgreen/.ghcup/ghc/9.4.7/bin/ghc-pkg-9.4.7 --user --package-db=clear --package-db=global --package-db=/Users/matgreen/.stack/snapshots/aarch64-osx/48fb795e000b835a7b00e7f5546747e4d954eaa78ffd2dd5f21d7dbd5b96fd76/9.4.7/pkgdb --libdir=/Users/matgreen/.stack/snapshots/aarch64-osx/48fb795e000b835a7b00e7f5546747e4d954eaa78ffd2dd5f21d7dbd5b96fd76/9.4.7/lib --bindir=/Users/matgreen/.stack/snapshots/aarch64-osx/48fb795e000b835a7b00e7f5546747e4d954eaa78ffd2dd5f21d7dbd5b96fd76/9.4.7/bin --datadir=/Users/matgreen/.stack/snapshots/aarch64-osx/48fb795e000b835a7b00e7f5546747e4d954eaa78ffd2dd5f21d7dbd5b96fd76/9.4.7/share --libexecdir=/Users/matgreen/.stack/snapshots/aarch64-osx/48fb795e000b835a7b00e7f5546747e4d954eaa78ffd2dd5f21d7dbd5b96fd76/9.4.7/libexec --sysconfdir=/Users/matgreen/.stack/snapshots/aarch64-osx/48fb795e000b835a7b00e7f5546747e4d954eaa78ffd2dd5f21d7dbd5b96fd76/9.4.7/etc --docdir=/Users/matgreen/.stack/snapshots/aarch64-osx/48fb795e000b835a7b00e7f5546747e4d954eaa78ffd2dd5f21d7dbd5b96fd76/9.4.7/doc/digest-0.0.1.7 --htmldir=/Users/matgreen/.stack/snapshots/aarch64-osx/48fb795e000b835a7b00e7f5546747e4d954eaa78ffd2dd5f21d7dbd5b96fd76/9.4.7/doc/digest-0.0.1.7 --haddockdir=/Users/matgreen/.stack/snapshots/aarch64-osx/48fb795e000b835a7b00e7f5546747e4d954eaa78ffd2dd5f21d7dbd5b96fd76/9.4.7/doc/digest-0.0.1.7 --dependency=base=base-4.17.2.0 --dependency=bytestring=bytestring-0.11.5.2 -fpkg-config --exact-configuration --ghc-option=-fhide-source-paths
+       Process exited with code: ExitFailure 1 
