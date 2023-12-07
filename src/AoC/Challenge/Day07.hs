@@ -1,19 +1,13 @@
-{-# LANGUAGE PartialTypeSignatures #-}
-{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
-{-# OPTIONS_GHC -Wno-unused-imports #-}
-{-# OPTIONS_GHC -Wno-unused-top-binds #-}
-
 module AoC.Challenge.Day07 (
   day07a,
+  day07b,
   )
 where
-
--- , day07b
 
 import AoC.Common (listTup2)
 import AoC.Solution
 import AoC.Util (freqs, maybeToEither)
-import Control.Monad ((<=<), join)
+import Control.Monad (join)
 import Control.DeepSeq (NFData)
 import Data.Bitraversable (bitraverse)
 import Data.List (sortOn)
@@ -23,11 +17,9 @@ import Data.Ord (Down(..))
 import GHC.Generics (Generic)
 import Text.Read (readMaybe)
 
-
-import Data.Maybe (fromJust)
-
 data Card
-  = Two
+  = Joker
+  | Two
   | Three
   | Four
   | Five
@@ -42,21 +34,47 @@ data Card
   | Ace
   deriving (Enum, Eq, Generic, NFData, Ord, Show)
 
-charToCard :: Map Char Card
-charToCard = M.fromList $ zip "23456789TJQKA" [Two .. Ace]
+charToCardA :: Map Char Card
+charToCardA = M.fromList $ zip "23456789TJQKA" [Two .. Ace]
 
-parse :: String -> Either String [([Card], Int)]
-parse =
+parse :: Map Char Card -> String -> Either String [([Card], Int)]
+parse cToC =
   maybeToEither "invalid input"
    . join
-   . fmap (traverse (bitraverse (traverse (`M.lookup` charToCard)) (readMaybe)))
+   . fmap (traverse (bitraverse (traverse (`M.lookup` cToC)) (readMaybe)))
    . traverse (listTup2 . words) 
    . lines
 
-day07a :: Solution [([Card], Int)] Int
-day07a = Solution{sParse = parse, sShow = show,
-                  sSolve = Right . sum . zipWith (\i (_, b) -> i * b) [1..] . sortOn (\(h, _) -> (sortOn Down . M.elems . freqs $ h, h))
-                  }
+solve :: Ord a => ([Card] -> a) -> [([Card], Int)] -> Int
+solve handScore =
+  sum
+  . zipWith (\i (_, b) -> i * b) [1..]
+  . sortOn (handScore . fst)
 
-day07b :: Solution _ _
-day07b = Solution{sParse = Right, sShow = show, sSolve = Right}
+handScoreA :: [Card] -> ([Int], [Card])
+handScoreA cs = (sortOn Down . M.elems . freqs $ cs, cs)
+
+day07a :: Solution [([Card], Int)] Int
+day07a = Solution{sParse = parse charToCardA, sShow = show, sSolve = Right . solve handScoreA }
+
+charToCardB :: Map Char Card
+charToCardB = M.insert 'J' Joker charToCardA
+
+handScoreB :: [Card] -> ([Int], [Card])
+handScoreB cs =
+  -- Add the jokers to the top frequency.
+  let
+    fs = freqs cs
+    numJokers = M.lookup Joker fs
+    fs' = M.insert Joker 0 fs
+    fsl = sortOn Down (M.elems fs')
+    scores = case numJokers of
+      Nothing -> fsl
+      Just n -> case fsl of
+        [] -> [n]
+        x : xs -> (x + n) : xs
+  in
+  (scores, cs)
+
+day07b :: Solution [([Card], Int)] Int
+day07b = Solution{sParse = parse charToCardB, sShow = show, sSolve = Right . solve handScoreB }
