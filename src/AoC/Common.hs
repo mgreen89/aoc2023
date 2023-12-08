@@ -4,6 +4,7 @@ module AoC.Common (
   pairs,
   listTup2,
   listTup3,
+  listTup4,
 ) where
 
 import Data.List (tails)
@@ -32,3 +33,8 @@ listTup2 _ = Nothing
 listTup3 :: [a] -> Maybe (a, a, a)
 listTup3 [a, b, c] = Just (a, b, c)
 listTup3 _ = Nothing
+
+-- | Safely convert a list to a 4-tuple of the elements.
+listTup4 :: [a] -> Maybe (a, a, a, a)
+listTup4 [a, b, c, d] = Just (a, b, c, d)
+listTup4 _ = Nothing
