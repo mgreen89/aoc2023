@@ -4,7 +4,6 @@ module AoC.Challenge.Day10
   )
 where
 
-import AoC.Common.Graph (explore)
 import AoC.Solution
 import Control.Monad (guard)
 import Data.Map (Map)
@@ -70,9 +69,19 @@ parse s =
           guard (n `elem` a)
           pure d
 
+getLoop :: Point -> Map Point [Point] -> [Point]
+getLoop s m =
+  go s (head $ m M.! s) [s]
+  where
+    go prev curr path
+      | curr == s = s : path
+      | otherwise =
+          let next = head . filter (/= prev) $ m M.! curr
+           in go curr next (curr : path)
+
 solveA :: (Point, Map Point [Point]) -> Int
-solveA (s, m) =
-  maximum . M.elems . explore (M.fromList . (`zip` repeat 1) . (m M.!)) $ s
+solveA =
+  (`div` 2) . length . uncurry getLoop
 
 day10a :: Solution (Point, Map Point [Point]) Int
 day10a =
@@ -91,16 +100,6 @@ shoeLace =
     go :: [Point] -> Int
     go (V2 x1 y1 : p2@(V2 x2 y2) : xs) = (x1 * y2) - (x2 * y1) + go (p2 : xs)
     go _ = 0
-
-getLoop :: Point -> Map Point [Point] -> [Point]
-getLoop s m =
-  go s (head $ m M.! s) [s]
-  where
-    go prev curr path
-      | curr == s = s : path
-      | otherwise =
-          let next = head . filter (/= prev) $ m M.! curr
-           in go curr next (curr : path)
 
 solveB :: (Point, Map Point [Point]) -> Int
 solveB (s, m) =
