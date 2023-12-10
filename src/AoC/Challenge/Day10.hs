@@ -1,14 +1,8 @@
-{-# LANGUAGE PartialTypeSignatures #-}
-{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
-{-# OPTIONS_GHC -Wno-unused-imports #-}
-{-# OPTIONS_GHC -Wno-unused-top-binds #-}
-
 module AoC.Challenge.Day10
   ( day10a,
+    day10b,
   )
 where
-
--- , day10b
 
 import AoC.Common.Graph (explore)
 import AoC.Solution
@@ -16,7 +10,6 @@ import Control.Monad (guard)
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe (mapMaybe)
-import Debug.Trace
 import Linear (V2 (..))
 
 type Point = V2 Int
@@ -89,5 +82,39 @@ day10a =
       sSolve = Right . solveA
     }
 
-day10b :: Solution _ _
-day10b = Solution {sParse = Right, sShow = show, sSolve = Right}
+-- Use the shoelace theorem to get the area of the polygon with the
+-- given vertices.
+shoeLace :: [Point] -> Int
+shoeLace =
+  abs . (`div` 2) . go
+  where
+    go :: [Point] -> Int
+    go (V2 x1 y1 : p2@(V2 x2 y2) : xs) = (x1 * y2) - (x2 * y1) + go (p2 : xs)
+    go _ = 0
+
+getLoop :: Point -> Map Point [Point] -> [Point]
+getLoop s m =
+  go s (head $ m M.! s) [s]
+  where
+    go prev curr path
+      | curr == s = s : path
+      | otherwise =
+          let next = head . filter (/= prev) $ m M.! curr
+           in go curr next (curr : path)
+
+solveB :: (Point, Map Point [Point]) -> Int
+solveB (s, m) =
+  let pipePoints = getLoop s m
+   in -- Use Pick's theorem
+      -- Area = (interior points) + (boundary points / 2) - 1
+      --
+      -- Want the interior points.
+      shoeLace pipePoints - (length pipePoints `div` 2) + 1
+
+day10b :: Solution (Point, Map Point [Point]) Int
+day10b =
+  Solution
+    { sParse = Right . parse,
+      sShow = show,
+      sSolve = Right . solveB
+    }
