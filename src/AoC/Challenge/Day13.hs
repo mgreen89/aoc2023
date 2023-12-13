@@ -1,21 +1,16 @@
-{-# LANGUAGE PartialTypeSignatures #-}
-{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
-{-# OPTIONS_GHC -Wno-unused-imports #-}
-{-# OPTIONS_GHC -Wno-unused-top-binds #-}
-
 module AoC.Challenge.Day13
   ( day13a,
+    day13b,
   )
 where
 
--- , day13b
-
 import AoC.Solution
+import AoC.Util (maybeToEither)
 import Control.Applicative (liftA2)
 import Control.Monad (guard)
 import Data.Foldable (foldl')
 import Data.List.Split (splitOn)
-import Data.Maybe (fromJust, listToMaybe, mapMaybe)
+import Data.Maybe (catMaybes, listToMaybe, mapMaybe)
 import Data.Set (Set)
 import qualified Data.Set as S
 import Linear (V2 (..))
@@ -33,17 +28,9 @@ parse =
         . zipWith (\y -> zipWith (\x -> (V2 x y,)) [0 ..]) [0 ..]
         . lines
 
-firstJust :: [Maybe a] -> Maybe a
-firstJust (Just x : _) = Just x
-firstJust (Nothing : rest) = firstJust rest
-firstJust [] = Nothing
-
-findReflections :: Set Point -> Int
-findReflections ps =
-  let x = firstJust [(* 100) <$> check yMax rows, check xMax cols]
-   in case x of
-        Just f -> f
-        Nothing -> error "failed!!"
+findReflection :: Set Point -> [Int]
+findReflection ps =
+  ((* 100) <$> check yMax rows) <> check xMax cols
   where
     (V2 xMax yMax) = S.foldl' (liftA2 max) 0 ps
 
@@ -64,9 +51,9 @@ findReflections ps =
     construct :: (Foldable f) => f Int -> Int
     construct = foldl' (\a q -> a + 2 ^ q) 0
 
-    check :: Int -> [Int] -> Maybe Int
+    check :: Int -> [Int] -> [Int]
     check cMax cs =
-      firstJust [go i | i <- [1 .. cMax]]
+      catMaybes [go i | i <- [1 .. cMax]]
       where
         go a =
           let (lt, gt) = splitAt a cs
@@ -77,8 +64,27 @@ day13a =
   Solution
     { sParse = Right . parse,
       sShow = show,
-      sSolve = Right . sum . fmap findReflections
+      sSolve = fmap sum . traverse (maybeToEither "didn't find reflection" . listToMaybe . findReflection)
     }
 
-day13b :: Solution _ _
-day13b = Solution {sParse = Right, sShow = show, sSolve = Right}
+solveB :: [Set Point] -> Int
+solveB =
+  sum . fmap go
+  where
+    go :: Set Point -> Int
+    go ps =
+      let (V2 xMax yMax) = S.foldl' (liftA2 max) 0 ps
+          initSol = head $ findReflection ps
+       in head . filter (/= initSol) . concat $
+            [ findReflection ps'
+              | x <- [0 .. xMax],
+                y <- [0 .. yMax],
+                let smudge = V2 x y,
+                let ps' =
+                      if S.member smudge ps
+                        then S.delete smudge ps
+                        else S.insert smudge ps
+            ]
+
+day13b :: Solution [Set Point] Int
+day13b = Solution {sParse = Right . parse, sShow = show, sSolve = Right . solveB}
