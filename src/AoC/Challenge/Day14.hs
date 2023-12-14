@@ -32,10 +32,11 @@ parse s =
       . lines
       $ s
 
+-- This relies on there being at least one cube in each edge.
 rollUp :: Set Point -> Set Point -> Set Point
 rollUp cs rs =
   let
-    (V2 xMax yMax) = S.foldl' (liftA2 max) 0 rs
+    (V2 xMax yMax) = S.foldl' (liftA2 max) 0 cs
     cols xs = [ S.filter (\(V2 x _) -> x == i) xs | i <- [1..xMax] ]
 
     cubeCols = cols cs
@@ -61,46 +62,41 @@ score = sum . fmap (\(V2 _ y) -> y) . S.elems
 day14a :: Solution (Set Point, Set Point) Int
 day14a = Solution{sParse = Right . parse, sShow = show, sSolve = Right . score . uncurry rollUp }
 
-spin :: Set Point -> Set Point -> Set Point
-spin cs rs =
-  rotate
-  . rollUp (rotate (rotate (rotate cs)))
-  . traceShowId
-  . rotate
-  . rollUp (rotate (rotate cs))
-  . traceShowId
-  . rotate
-  . rollUp (rotate cs)
-  . traceShowId
-  . rotate
-  $ rollUp cs rs
-
-  where
-    (V2 xMax _) = S.foldl' (liftA2 max) 0 rs
-
-    rotate :: Set Point -> Set Point
-    rotate = S.map (\(V2 x y) -> V2 y (xMax-x+1))
-
 solveB :: Int -> (Set Point, Set Point) -> Int
-solveB tgt (rs, cs) =
-  fst $ mp IM.! ((tgt - fstI) `mod` rptLen)
+solveB tgt (cs, rs) =
+  fst $ mp IM.! (traceShowId (fstI + ((tgt - fstI) `mod` rptLen)))
   where
-    (fstI, rptLen, mp) = traceShowId $ build 1 cs IM.empty (IM.singleton 0 (score rs, rs))
+    (V2 xMax yMax) = S.foldl' (liftA2 max) 0 cs
+    (fstI, rptLen, mp) = build 1 rs IM.empty IM.empty
 
     -- Build up to a repeat. Return the first repeated value and the repeat length.
     build :: Int -> Set Point -> IntMap [Int] -> IntMap (Int, Set Point) -> (Int, Int, IntMap (Int, Set Point))
-    build i c sm rm =
+    build i r sm rm =
       let
-        next = traceShowId $ spin c rs
-        nextScore = traceShowId $ score next
+        next = spin cs r 
+        nextScore = score next
       in
       case IM.lookup nextScore sm of
         Nothing -> build (i + 1) next (IM.insertWith (++) nextScore [i] sm) (IM.insert i (nextScore, next) rm)
         Just is ->
           case filter (\j -> snd (rm IM.! j) == next) is of
-            [q] -> (q, i - q, IM.insert i (nextScore, next) rm)
+            [q] -> trace ("Repeats from " ++ (show q) ++ " to " ++ (show i)) (q, i - q, IM.insert i (nextScore, next) rm)
             [] -> build (i + 1) next (IM.insertWith (++) nextScore [i] sm) (IM.insert i (nextScore, next) rm)
             _ -> error "Matched too many!"
+
+    spin :: Set Point -> Set Point -> Set Point
+    spin c r =
+      rotate
+      . rollUp (rotate (rotate (rotate c)))
+      . rotate
+      . rollUp (rotate (rotate c)) 
+      . rotate
+      . rollUp (rotate c)
+      . rotate
+      $ rollUp c r
+
+    rotate :: Set Point -> Set Point
+    rotate = S.map (\(V2 x y) -> V2 y (xMax-x+1))
 
 day14b :: Solution (Set Point, Set Point) Int
 day14b = Solution{sParse = Right . parse, sShow = show, sSolve = Right . solveB 1000000000 }
