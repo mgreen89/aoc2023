@@ -1,51 +1,91 @@
-{-# LANGUAGE PartialTypeSignatures #-}
-{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
-{-# OPTIONS_GHC -Wno-unused-imports #-}
-{-# OPTIONS_GHC -Wno-unused-top-binds #-}
-
 module AoC.Challenge.Day14
   ( day14a,
+    day14b,
   )
 where
 
--- , day14b
-
 import AoC.Solution
+import Control.Applicative (liftA2)
 import Data.Foldable (foldl')
-import Data.List (transpose)
+import Data.IntMap (IntMap)
+import qualified Data.IntMap as IM
+import Data.Set (Set)
+import qualified Data.Set as S
+import Linear (V2 (..))
 
-data State = State
-  { pos :: Int,
-    posLast :: Int,
-    nCurr :: Int,
-    nTot :: Int,
-    acc :: Int
-  }
+type Point = V2 Int
 
-solveA :: [String] -> Int
-solveA = sum . fmap handleLine
+-- Parse so (1,1) is in the bottom left!
+-- Returns (cubed, rounded)
+parse :: String -> (Set Point, Set Point)
+parse s =
+  ( S.fromList . fmap fst . filter (\(_, c) -> c == '#') $ points,
+    S.fromList . fmap fst . filter (\(_, c) -> c == 'O') $ points
+  )
   where
-    handleLine :: String -> Int
-    handleLine =
-      calc . roll . foldl' go (State 0 0 0 0 0)
+    points :: [(Point, Char)]
+    points =
+      concat
+        . zipWith (\y -> zipWith (\x -> (V2 x y,)) [1 ..]) [1 ..]
+        . reverse
+        . lines
+        $ s
 
-    calc :: State -> Int
-    calc s = (s.nTot * (s.pos - 1)) - s.acc
+-- This relies on there being at least one cube in each edge.
+rollUp :: Set Point -> Set Point -> Set Point
+rollUp cs rs =
+  let (V2 xMax yMax) = S.foldl' (liftA2 max) 0 cs
+      cols xs = [S.filter (\(V2 x _) -> x == i) xs | i <- [1 .. xMax]]
 
-    go :: State -> Char -> State
-    go s '#' = roll s
-    go s 'O' = State (s.pos + 1) s.posLast (s.nCurr + 1) s.nTot s.acc
-    go s '.' = State (s.pos + 1) s.posLast s.nCurr s.nTot s.acc
-    go _ _ = error "Invalid input"
+      cubeCols = cols cs
+      roundCols = cols rs
 
-    roll :: State -> State
-    roll s =
-      if s.nCurr > 0
-        then State (s.pos + 1) (s.pos + 1) 0 (s.nCurr + s.nTot) (s.acc + sum (take s.nCurr [s.posLast ..]))
-        else State (s.pos + 1) (s.pos + 1) 0 s.nTot s.acc
+      rollCol :: Set Point -> Set Point -> Set Point
+      rollCol c r =
+        foldl' go S.empty (S.toDescList r)
+        where
+          go a (V2 x y)
+            | y == yMax = S.insert (V2 x y) a
+            | S.member (V2 x (y + 1)) (S.union a c) = S.insert (V2 x y) a
+            | otherwise = go a (V2 x (y + 1))
+   in S.unions
+        . fmap (uncurry rollCol)
+        $ zip cubeCols roundCols
 
-day14a :: Solution [String] Int
-day14a = Solution {sParse = Right . transpose . lines, sShow = show, sSolve = Right . solveA}
+score :: Set Point -> Int
+score = sum . fmap (\(V2 _ y) -> y) . S.elems
 
-day14b :: Solution _ _
-day14b = Solution {sParse = Right, sShow = show, sSolve = Right}
+day14a :: Solution (Set Point, Set Point) Int
+day14a = Solution {sParse = Right . parse, sShow = show, sSolve = Right . score . uncurry rollUp}
+
+solveB :: Int -> (Set Point, Set Point) -> Int
+solveB tgt (cs, rs) =
+  fst $ mp IM.! (fstI + ((tgt - fstI) `mod` rptLen))
+  where
+    (V2 xMax _) = S.foldl' (liftA2 max) 0 cs
+    (fstI, rptLen, mp) = build 1 rs IM.empty IM.empty
+
+    -- Build up to a repeat. Return the first repeated value and the repeat length.
+    build :: Int -> Set Point -> IntMap [Int] -> IntMap (Int, Set Point) -> (Int, Int, IntMap (Int, Set Point))
+    build i r sm rm =
+      let next = spinCycle cs r
+          nextScore = score next
+       in case IM.lookup nextScore sm of
+            Nothing -> build (i + 1) next (IM.insertWith (++) nextScore [i] sm) (IM.insert i (nextScore, next) rm)
+            Just is ->
+              case filter (\j -> snd (rm IM.! j) == next) is of
+                [q] -> (q, i - q, IM.insert i (nextScore, next) rm)
+                [] -> build (i + 1) next (IM.insertWith (++) nextScore [i] sm) (IM.insert i (nextScore, next) rm)
+                _ -> error "Matched too many!"
+
+    spinCycle :: Set Point -> Set Point -> Set Point
+    spinCycle c r = snd . go . go . go $ go (c, r)
+      where
+        go :: (Set Point, Set Point) -> (Set Point, Set Point)
+        go (cs', rs') = (rotate cs', rotate (rollUp cs' rs'))
+
+    rotate :: Set Point -> Set Point
+    rotate = S.map (\(V2 x y) -> V2 y (xMax - x + 1))
+
+day14b :: Solution (Set Point, Set Point) Int
+day14b = Solution {sParse = Right . parse, sShow = show, sSolve = Right . solveB 1000000000}
