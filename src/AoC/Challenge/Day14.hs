@@ -1,47 +1,106 @@
-{-# LANGUAGE PartialTypeSignatures #-}
-{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
-{-# OPTIONS_GHC -Wno-unused-imports #-}
-{-# OPTIONS_GHC -Wno-unused-top-binds #-}
-
 module AoC.Challenge.Day14 (
   day14a,
+  day14b,
   )
 where
 
--- day14a
--- , day14b
-
 import AoC.Solution
+import Control.Applicative (liftA2)
 import Data.Foldable (foldl')
-import Data.List (transpose)
+import Data.IntMap (IntMap)
+import qualified Data.IntMap as IM
 import Debug.Trace
+import Data.Set (Set)
+import qualified Data.Set as S
+import Linear (V2(..))
 
-data State = State { pos :: Int, posLast :: Int, nCurr :: Int, nTot :: Int, acc :: Int }
+type Point = V2 Int
 
-solveA :: [String] -> Int
-solveA = sum . fmap handleLine
+-- Parse so (1,1) is in the bottom left!
+-- Returns (cubed, rounded)
+parse :: String -> (Set Point, Set Point)
+parse s =
+  ( S.fromList . fmap fst . filter (\(_, c) -> c == '#') $ points
+  , S.fromList . fmap fst . filter (\(_, c) -> c == 'O') $ points
+  )
   where
-    handleLine :: String -> Int
-    handleLine =
-      calc . roll . foldl' go (State 0 0 0 0 0)
-      
-    calc :: State -> Int
-    calc s = (s.nTot * (s.pos - 1)) - s.acc
+    points :: [(Point, Char)]
+    points = 
+      concat
+      . zipWith (\y -> zipWith (\x -> (V2 x y,)) [1..]) [1..]
+      . reverse
+      . lines
+      $ s
 
-    go :: State -> Char -> State
-    go s '#' = roll s
-    go s 'O' = State (s.pos + 1) s.posLast (s.nCurr + 1) s.nTot s.acc
-    go s '.' = State (s.pos + 1) s.posLast s.nCurr s.nTot s.acc 
-    go _ _ = error "Invalid input"
+rollUp :: Set Point -> Set Point -> Set Point
+rollUp cs rs =
+  let
+    (V2 xMax yMax) = S.foldl' (liftA2 max) 0 rs
+    cols xs = [ S.filter (\(V2 x _) -> x == i) xs | i <- [1..xMax] ]
 
-    roll :: State -> State
-    roll s =
-        if s.nCurr > 0
-            then State (s.pos + 1) (s.pos + 1) 0 (s.nCurr + s.nTot) (s.acc + sum (take s.nCurr [s.posLast..]))
-            else State (s.pos + 1) (s.pos + 1) 0 s.nTot s.acc
+    cubeCols = cols cs
+    roundCols = cols rs
 
-day14a :: Solution [String] Int
-day14a = Solution{sParse = Right . transpose . lines, sShow = show, sSolve = Right . solveA }
+    rollCol :: Set Point -> Set Point -> Set Point
+    rollCol c r =
+      foldl' go S.empty (S.toDescList r)
+      where
+        go a (V2 x y)
+          | y == yMax = S.insert (V2 x y) a
+          | S.member (V2 x (y+1)) (S.union a c) = S.insert (V2 x y) a
+          | otherwise = go a (V2 x (y+1))
 
-day14b :: Solution _ _
-day14b = Solution{sParse = Right, sShow = show, sSolve = Right}
+  in
+  S.unions
+  . fmap (uncurry rollCol)
+  $ zip cubeCols roundCols
+
+score :: Set Point -> Int
+score = sum . fmap (\(V2 _ y) -> y) . S.elems
+
+day14a :: Solution (Set Point, Set Point) Int
+day14a = Solution{sParse = Right . parse, sShow = show, sSolve = Right . score . uncurry rollUp }
+
+spin :: Set Point -> Set Point -> Set Point
+spin cs rs =
+  rotate
+  . rollUp (rotate (rotate (rotate cs)))
+  . traceShowId
+  . rotate
+  . rollUp (rotate (rotate cs))
+  . traceShowId
+  . rotate
+  . rollUp (rotate cs)
+  . traceShowId
+  . rotate
+  $ rollUp cs rs
+
+  where
+    (V2 xMax _) = S.foldl' (liftA2 max) 0 rs
+
+    rotate :: Set Point -> Set Point
+    rotate = S.map (\(V2 x y) -> V2 y (xMax-x+1))
+
+solveB :: Int -> (Set Point, Set Point) -> Int
+solveB tgt (rs, cs) =
+  fst $ mp IM.! ((tgt - fstI) `mod` rptLen)
+  where
+    (fstI, rptLen, mp) = traceShowId $ build 1 cs IM.empty (IM.singleton 0 (score rs, rs))
+
+    -- Build up to a repeat. Return the first repeated value and the repeat length.
+    build :: Int -> Set Point -> IntMap [Int] -> IntMap (Int, Set Point) -> (Int, Int, IntMap (Int, Set Point))
+    build i c sm rm =
+      let
+        next = traceShowId $ spin c rs
+        nextScore = traceShowId $ score next
+      in
+      case IM.lookup nextScore sm of
+        Nothing -> build (i + 1) next (IM.insertWith (++) nextScore [i] sm) (IM.insert i (nextScore, next) rm)
+        Just is ->
+          case filter (\j -> snd (rm IM.! j) == next) is of
+            [q] -> (q, i - q, IM.insert i (nextScore, next) rm)
+            [] -> build (i + 1) next (IM.insertWith (++) nextScore [i] sm) (IM.insert i (nextScore, next) rm)
+            _ -> error "Matched too many!"
+
+day14b :: Solution (Set Point, Set Point) Int
+day14b = Solution{sParse = Right . parse, sShow = show, sSolve = Right . solveB 1000000000 }
