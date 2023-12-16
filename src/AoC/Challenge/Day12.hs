@@ -1,14 +1,8 @@
-{-# LANGUAGE PartialTypeSignatures #-}
-{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
-{-# OPTIONS_GHC -Wno-unused-imports #-}
-{-# OPTIONS_GHC -Wno-unused-top-binds #-}
-
 module AoC.Challenge.Day12
   ( day12a,
+    day12b,
   )
 where
-
--- , day12b
 
 import AoC.Common (listTup2)
 import AoC.Solution
@@ -16,9 +10,11 @@ import AoC.Util (maybeToEither)
 import Data.Array (Array)
 import qualified Data.Array as A
 import Data.Bifunctor (bimap)
+import Data.List (intercalate)
 import Data.List.Split (splitOn)
 import Data.Map (Map)
 import qualified Data.Map as M
+import Data.Maybe (fromMaybe)
 
 parse :: String -> Either String [(Array Int Char, Array Int Int)]
 parse =
@@ -34,21 +30,45 @@ parse =
     )
     . lines
 
-calc :: Array Int Char -> Array Int Int -> Int -> Int -> Int -> Int
-calc row groups iRow iGroup nSoFar
-  | iRow == snd (A.bounds row) + 1 =
-      if (snd (A.bounds groups) + 1 == iGroup && nSoFar == 0)
-        || (snd (A.bounds groups) == iGroup && nSoFar == groups A.! iGroup)
-        then 1
-        else 0
-  | otherwise =
-      let brokenCount = calc row groups (iRow + 1) iGroup (nSoFar + 1)
+calcMap :: Array Int Char -> Array Int Int -> Map (Int, Int, Int) Int
+calcMap row groups =
+  m
+  where
+    (rMin, rMax) = A.bounds row
+    (gMin, gMax) = A.bounds groups
+
+    m :: Map (Int, Int, Int) Int
+    m =
+      M.mapWithKey (\k _ -> calc k) $
+        M.fromList
+          ( [ ((r, g, n), ())
+              | r <- [rMin .. rMax],
+                g <- [gMin .. gMax],
+                n <- [0 .. (groups A.! g)]
+            ]
+              ++ [((r, gMax + 1, 0), ()) | r <- [rMin .. rMax]]
+          )
+
+    get :: (Int, Int, Int) -> Int
+    get (r, g, n)
+      | r == rMax + 1 =
+          if (gMax + 1 == g && n == 0)
+            || (gMax == g && n == groups A.! g)
+            then 1
+            else 0
+      | otherwise =
+          fromMaybe 0 (M.lookup (r, g, n) m)
+
+    calc :: (Int, Int, Int) -> Int
+    calc (r, g, n) =
+      let brokenCount
+            | g > gMax = 0
+            | otherwise = get (r + 1, g, n + 1)
           operationalCount
-            | nSoFar == 0 = calc row groups (iRow + 1) iGroup 0
-            | iGroup <= snd (A.bounds groups) && nSoFar == groups A.! iGroup =
-                calc row groups (iRow + 1) (iGroup + 1) 0
+            | n == 0 = get (r + 1, g, 0)
+            | g <= gMax && n == groups A.! g = get (r + 1, g + 1, 0)
             | otherwise = 0
-       in case row A.! iRow of
+       in case row A.! r of
             '.' -> operationalCount
             '#' -> brokenCount
             '?' -> operationalCount + brokenCount
@@ -56,10 +76,35 @@ calc row groups iRow iGroup nSoFar
 
 solveA :: [(Array Int Char, Array Int Int)] -> Int
 solveA =
-  sum . fmap (\(a, b) -> calc a b 0 0 0)
+  sum . fmap ((M.! (0, 0, 0)) . uncurry calcMap)
 
 day12a :: Solution [(Array Int Char, Array Int Int)] Int
 day12a = Solution {sParse = parse, sShow = show, sSolve = Right . solveA}
 
-day12b :: Solution _ _
-day12b = Solution {sParse = Right, sShow = show, sSolve = Right}
+solveB :: [(Array Int Char, Array Int Int)] -> Int
+solveB =
+  sum
+    . fmap
+      ( (M.! (0, 0, 0))
+          . uncurry calcMap
+          . bimap mapRow mapGroup
+      )
+  where
+    mapRow :: Array Int Char -> Array Int Char
+    mapRow a =
+      let (rMin, rMax) = A.bounds a
+          l = A.elems a
+       in A.listArray
+            (rMin, (5 * (rMax - rMin + 1)) + 3)
+            (intercalate "?" (replicate 5 l))
+
+    mapGroup :: Array Int Int -> Array Int Int
+    mapGroup a =
+      let (rMin, rMax) = A.bounds a
+          l = A.elems a
+       in A.listArray
+            (rMin, 5 * (rMax - rMin + 1) - 1)
+            (concat $ replicate 5 l)
+
+day12b :: Solution [(Array Int Char, Array Int Int)] Int
+day12b = Solution {sParse = parse, sShow = show, sSolve = Right . solveB}
