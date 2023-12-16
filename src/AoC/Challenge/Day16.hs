@@ -1,14 +1,8 @@
-{-# LANGUAGE PartialTypeSignatures #-}
-{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
-{-# OPTIONS_GHC -Wno-unused-imports #-}
-{-# OPTIONS_GHC -Wno-unused-top-binds #-}
-
 module AoC.Challenge.Day16
   ( day16a,
+    day16b,
   )
 where
-
--- , day16b
 
 import AoC.Common.Point (Dir (..), dirPoint, dirRot)
 import AoC.Solution
@@ -49,11 +43,10 @@ parse =
     . zipWith (\y -> zipWith (\x -> (V2 x y,)) [0 ..]) [0 ..]
     . lines
 
-solveA :: Map Point Elem -> Int
-solveA m =
-  S.size . S.map fst . snd $ fill initial
+energise :: Map Point Elem -> (Point, Dir) -> Int
+energise m (p, d) =
+  S.size . S.map fst . snd $ fill ((p, d), S.empty)
   where
-    initial = ((V2 0 0, R), S.empty)
     (V2 xMin yMin) = foldl' (liftA2 min) 0 $ M.keys m
     (V2 xMax yMax) = foldl' (liftA2 max) 0 $ M.keys m
 
@@ -105,8 +98,30 @@ day16a =
   Solution
     { sParse = Right . parse,
       sShow = show,
-      sSolve = Right . solveA
+      sSolve = Right . flip energise (V2 0 0, R)
     }
 
-day16b :: Solution _ _
-day16b = Solution {sParse = Right, sShow = show, sSolve = Right}
+solveB :: Map Point Elem -> Int
+solveB m =
+  maximum $ fmap (energise m) possStarts
+  where
+    (V2 xMin yMin) = foldl' (liftA2 min) 0 $ M.keys m
+    (V2 xMax yMax) = foldl' (liftA2 max) 0 $ M.keys m
+
+    possStarts = [
+      pd | x <- [xMin..xMax]
+         , y <- [yMin..yMax]
+         , rs <- (, R) <$> [V2 xMin y]
+         , ds <- (, D) <$> [V2 x yMin]
+         , ls <- (, L) <$> [V2 xMax y]
+         , us <- (, U) <$> [V2 x yMax]
+         , pd <- [rs, ds, ls, us]
+      ]
+
+day16b :: Solution (Map Point Elem) Int
+day16b =
+  Solution
+    { sParse = Right . parse,
+      sShow = show,
+      sSolve = Right . solveB
+    }
