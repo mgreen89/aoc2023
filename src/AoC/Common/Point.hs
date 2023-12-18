@@ -12,6 +12,7 @@ module AoC.Common.Point
     Dir (..),
     dirRot,
     dirPoint,
+    shoeLace,
   )
 where
 
@@ -85,7 +86,7 @@ parse2dMap = fmap createMap . traverse (traverse (readEither . pure)) . lines
 
 -- | Direction
 -- Up, Right, Left and Down.
-data Dir = U | R | D | L deriving (Show, Eq, Ord, Enum, Generic, NFData)
+data Dir = U | R | D | L deriving (Show, Eq, Ord, Enum, Generic, NFData, Read)
 
 -- | Rotate a direction.
 dirRot :: Dir -> Dir -> Dir
@@ -133,3 +134,13 @@ instance Semigroup Dir where
 instance Monoid Dir where
   mempty :: Dir
   mempty = U
+
+-- Use the shoelace theorem to get the area of the polygon with the
+-- given vertices.
+shoeLace :: Integral a => [V2 a] -> a
+shoeLace =
+  abs . (`div` 2) . go 0
+  where
+    go :: Num a => a -> [V2 a] -> a
+    go a (V2 x1 y1 : p2@(V2 x2 y2) : xs) = go (a + (x1 * y2) - (x2 * y1)) (p2 : xs)
+    go a _ = a
