@@ -1,14 +1,8 @@
-{-# LANGUAGE PartialTypeSignatures #-}
-{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
-{-# OPTIONS_GHC -Wno-unused-imports #-}
-{-# OPTIONS_GHC -Wno-unused-top-binds #-}
-
 module AoC.Challenge.Day18
   ( day18a,
+    day18b,
   )
 where
-
--- , day18b
 
 import AoC.Common (listTup2)
 import AoC.Common.Point (Dir (..), dirPoint, shoeLace)
@@ -19,8 +13,8 @@ import Data.Bitraversable (bitraverse)
 import Data.Foldable (foldl')
 import Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
-import Debug.Trace
 import Linear (V2 (..), (*^))
+import Safe (headMay)
 import Text.Read (readEither)
 
 type Point = V2 Int
@@ -30,21 +24,16 @@ type Point = V2 Int
 -- and boundary points.
 --
 -- A = i + b/2 - 1  ==>  i = A - b/2 + 1
-solveA :: [(Dir, Int)] -> Int
-solveA ds =
+solve :: [(Dir, Int)] -> Int
+solve ds =
   internal + boundary
   where
-    boundaryPoints = NE.toList . foldl' build (V2 0 0 NE.:| []) $ ds
-    area = shoeLace boundaryPoints
-    boundary = length boundaryPoints - 1
+    (boundaryPoints, boundary) = foldl' build (V2 0 0 NE.:| [], 0) $ ds
+    area = shoeLace (NE.toList boundaryPoints)
     internal = area - (boundary `div` 2) + 1
 
-    build :: NonEmpty Point -> (Dir, Int) -> NonEmpty Point
-    build ps (d, l) = go l d ps
-
-    go :: Int -> Dir -> NonEmpty Point -> NonEmpty Point
-    go 0 _ ps = ps
-    go n d ps@(p NE.:| _) = go (n - 1) d ((p + dirPoint d) NE.<| ps)
+    build :: (NonEmpty Point, Int) -> (Dir, Int) -> (NonEmpty Point, Int)
+    build (ps@(p NE.:| _), tl) (d, l) = ((p + l *^ dirPoint d) NE.<| ps, tl + l)
 
 day18a :: Solution [(Dir, Int)] Int
 day18a =
@@ -59,8 +48,30 @@ day18a =
               )
             . lines,
       sShow = show,
-      sSolve = Right . solveA
+      sSolve = Right . solve
     }
 
-day18b :: Solution _ _
-day18b = Solution {sParse = Right, sShow = show, sSolve = Right}
+parseB :: String -> Either String [(Dir, Int)]
+parseB =
+  traverse parseInstruction
+    <=< maybeToEither "invalid line"
+      . traverse (headMay . drop 2 . words)
+      . lines
+  where
+    parseInstruction :: String -> Either String (Dir, Int)
+    parseInstruction
+      ['(', '#', a, b, c, d, e, f, ')'] = do
+        dir <- getDir f
+        n <- readEither ['0', 'x', a, b, c, d, e]
+        pure (dir, n)
+    parseInstruction _ = Left "Invalid line"
+
+    getDir :: Char -> Either String Dir
+    getDir '0' = Right R
+    getDir '1' = Right D
+    getDir '2' = Right L
+    getDir '3' = Right U
+    getDir _ = Left "Invalid direction"
+
+day18b :: Solution [(Dir, Int)] Int
+day18b = Solution {sParse = parseB, sShow = show, sSolve = Right . solve}
