@@ -2,7 +2,6 @@
 
 module AoC.Common.Graph
   ( aStar,
-    aStarWithPath,
     dijkstra,
     explore,
   )
@@ -24,6 +23,14 @@ insertIfBetter k p x q = case PSQ.lookup k q of
 -- Path Finding
 --------------------------------------
 
+data AStarState n a = AStarState
+  { -- | Queue of node to cost and list of parents.
+    open :: !(OrdPSQ n a (a, [n])),
+    -- | Map of node to list of parents.
+    closed :: !(Map n [n])
+  }
+  deriving (Show)
+
 aStar ::
   forall a n.
   (Ord a, Num a, Ord n) =>
@@ -35,51 +42,9 @@ aStar ::
   n ->
   -- | Destination
   (n -> Bool) ->
-  -- | Total cost if successful
-  Maybe a
-aStar heuristic getNs start isDest =
-  (\(n, _, _) -> n) <$> go (M.empty, PSQ.singleton start 0 0)
-  where
-    go :: (Map n a, OrdPSQ n a a) -> Maybe (a, Map n a, OrdPSQ n a a)
-    go (v, uv) = do
-      (currP, _, currV, uv') <- PSQ.minView uv
-      let v' = M.insert currP currV v
-      if isDest currP
-        then pure (currV, v', uv')
-        else go (v', M.foldlWithKey' (handleNeighbour currV) uv' (getNs currP))
-      where
-        handleNeighbour :: a -> OrdPSQ n a a -> n -> a -> OrdPSQ n a a
-        handleNeighbour currCost q n nCost
-          | M.member n v = q
-          | otherwise =
-              insertIfBetter
-                n
-                (currCost + nCost + heuristic n)
-                (currCost + nCost)
-                q
-
-data AStarState n a = AStarState
-  { -- | Queue of node to cost and list of parents.
-    open :: !(OrdPSQ n a (a, [n])),
-    -- | Map of node to list of parents.
-    closed :: !(Map n [n])
-  }
-  deriving (Show)
-
-aStarWithPath ::
-  forall a n.
-  (Ord a, Num a, Ord n) =>
-  -- | Heuristic
-  (n -> a) ->
-  -- | Neighbours and costs
-  ([n] -> n -> Map n a) ->
-  -- | Start
-  n ->
-  -- | Destination
-  (n -> Bool) ->
-  -- | Total cost if successful
+  -- | Total cost if successful, and path taken.
   Maybe (a, [n])
-aStarWithPath heuristic getNs start isDest =
+aStar heuristic getNs start isDest =
   present <$> go (AStarState (PSQ.singleton start 0 (0, [])) M.empty)
   where
     present :: (n, a, AStarState n a) -> (a, [n])
@@ -94,7 +59,7 @@ aStarWithPath heuristic getNs start isDest =
           parents' = node : parents
       if isDest node
         then pure (node, cost, s')
-        else go (M.foldlWithKey' (handleNeighbour (cost, parents')) s' (getNs parents' node))
+        else go (M.foldlWithKey' (handleNeighbour (cost, parents')) s' (getNs node))
 
     handleNeighbour :: (a, [n]) -> AStarState n a -> n -> a -> AStarState n a
     handleNeighbour (cost, parents) s n nCost
@@ -119,7 +84,7 @@ dijkstra ::
   -- | Destination
   (n -> Bool) ->
   -- | Total cost if successful
-  Maybe a
+  Maybe (a, [n])
 dijkstra = aStar (const 0)
 
 -- | Fully explore a graph using a dijkstra-like algorithm.

@@ -4,7 +4,7 @@ module AoC.Challenge.Day17
   )
 where
 
-import AoC.Common.Graph (aStarWithPath)
+import AoC.Common.Graph (aStar)
 import AoC.Common.Point (Dir (..), dirPoint, manhattan, parse2dMap)
 import AoC.Solution
 import AoC.Util (maybeToEither)
@@ -21,7 +21,7 @@ solve :: Int -> Int -> Map Point Int -> Either String Int
 solve minStep maxStep m =
   fmap fst
     . maybeToEither "aStar failed"
-    . aStarWithPath (manhattan finish . fst) getNeighbs (start, U)
+    . aStar (manhattan finish . fst) getNeighbs (start, Nothing)
     $ ((== finish) . fst)
   where
     start = V2 0 0
@@ -43,18 +43,20 @@ solve minStep maxStep m =
                     Nothing -> a
                     Just c -> go (i + 1) ((next, lastC + c) NE.<| a)
 
-    getNeighbs :: [(Point, Dir)] -> (Point, Dir) -> Map (Point, Dir) Int
-    getNeighbs parents (p, d) =
+    getNeighbs :: (Point, Maybe Dir) -> Map (Point, Maybe Dir) Int
+    getNeighbs (p, md) =
       let possDirections =
             -- If there are no parents this is the first node, so allow
             -- right and down (start at top left)
-            if null parents
-              then -- Only move R and D.
+            case md of
+              Nothing ->
+                -- Start, only move R and D.
                 [R, D]
-              else -- Change direction, and don't allow backtracking.
+              Just d ->
+                -- Change direction, and don't allow backtracking.
                 [d <> L, d <> R]
        in M.fromList
-            . concatMap (\d' -> first (,d') <$> spanDir p d')
+            . concatMap (\d' -> first (,Just d') <$> spanDir p d')
             $ possDirections
 
 day17a :: Solution (Map Point Int) Int
