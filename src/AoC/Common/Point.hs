@@ -70,10 +70,10 @@ inBoundingBox (bMin, bMax) p = and $ go <$> p <*> bMin <*> bMax
   go cp cmin cmax = cp >= cmin && cp <= cmax
 
 -- | Parse String data into a Map
-parse2dMap :: String -> Either String (Map (V2 Int) Int)
+parse2dMap :: Read a => String -> Either String (Map (V2 Int) a)
 parse2dMap = fmap createMap . traverse (traverse (readEither . pure)) . lines
  where
-  createMap :: [[Int]] -> Map (V2 Int) Int
+  createMap :: [[a]] -> Map (V2 Int) a
   createMap =
     M.fromList
       . concat
