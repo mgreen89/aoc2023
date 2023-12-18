@@ -5,7 +5,7 @@ module AoC.Challenge.Day17
 where
 
 import AoC.Common.Graph (aStarWithPath)
-import AoC.Common.Point (Dir (..), dirPoint, dirRot, manhattan, parse2dMap)
+import AoC.Common.Point (Dir (..), dirPoint, manhattan, parse2dMap)
 import AoC.Solution
 import AoC.Util (maybeToEither)
 import Data.Bifunctor (first)
@@ -52,7 +52,7 @@ solve minStep maxStep m =
               then -- Only move R and D.
                 [R, D]
               else -- Change direction, and don't allow backtracking.
-                [dirRot L d, dirRot R d]
+                [d <> L, d <> R]
        in M.fromList
             . concatMap (\d' -> first (,d') <$> spanDir p d')
             $ possDirections

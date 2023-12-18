@@ -1,17 +1,19 @@
+{-# LANGUAGE InstanceSigs #-}
 {-# OPTIONS_GHC -Wno-unused-top-binds #-}
 
-module AoC.Common.Point (
-  cardinalNeighbs,
-  allNeighbs,
-  manhattan,
-  boundingBox,
-  boundingBox',
-  inBoundingBox,
-  parse2dMap,
-  Dir (..),
-  dirRot,
-  dirPoint,
-) where
+module AoC.Common.Point
+  ( cardinalNeighbs,
+    allNeighbs,
+    manhattan,
+    boundingBox,
+    boundingBox',
+    inBoundingBox,
+    parse2dMap,
+    Dir (..),
+    dirRot,
+    dirPoint,
+  )
+where
 
 import Control.Applicative
 import Control.DeepSeq (NFData)
@@ -66,24 +68,23 @@ boundingBox' = fmap boundingBox . NE.nonEmpty . toList
 -- | Check if a point is in a bounding box.
 inBoundingBox :: (Applicative g, Foldable g, Ord a) => (g a, g a) -> g a -> Bool
 inBoundingBox (bMin, bMax) p = and $ go <$> p <*> bMin <*> bMax
- where
-  go cp cmin cmax = cp >= cmin && cp <= cmax
+  where
+    go cp cmin cmax = cp >= cmin && cp <= cmax
 
 -- | Parse String data into a Map
-parse2dMap :: Read a => String -> Either String (Map (V2 Int) a)
+parse2dMap :: (Read a) => String -> Either String (Map (V2 Int) a)
 parse2dMap = fmap createMap . traverse (traverse (readEither . pure)) . lines
- where
-  createMap :: [[a]] -> Map (V2 Int) a
-  createMap =
-    M.fromList
-      . concat
-      . zipWith
-        (\y -> zipWith (\x -> (V2 x y,)) [0 ..])
-        [0 ..]
+  where
+    createMap :: [[a]] -> Map (V2 Int) a
+    createMap =
+      M.fromList
+        . concat
+        . zipWith
+          (\y -> zipWith (\x -> (V2 x y,)) [0 ..])
+          [0 ..]
 
-{- | Direction
-Up, Right, Left and Down.
--}
+-- | Direction
+-- Up, Right, Left and Down.
 data Dir = U | R | D | L deriving (Show, Eq, Ord, Enum, Generic, NFData)
 
 -- | Rotate a direction.
@@ -105,12 +106,30 @@ dirRot L = \case
   D -> R
   L -> D
 
-{- | Convert a direction to a unit vector in the 2D plane.
-N.B. that x increases to the right, y increases going down.
--}
+-- | Convert a direction to a unit vector in the 2D plane.
+-- N.B. that x increases to the right, y increases going down.
 dirPoint :: Dir -> V2 Int
 dirPoint = \case
   U -> V2 0 (-1)
   R -> V2 1 0
   D -> V2 0 1
   L -> V2 (-1) 0
+
+instance Semigroup Dir where
+  (<>) :: Dir -> Dir -> Dir
+  (<>) = dirRot
+
+  stimes :: (Integral b) => b -> Dir -> Dir
+  stimes n d = case n `mod` 4 of
+    1 -> d
+    2 -> d <> d
+    3 -> case d of
+      U -> U
+      R -> L
+      D -> D
+      L -> R
+    _ -> U
+
+instance Monoid Dir where
+  mempty :: Dir
+  mempty = U
