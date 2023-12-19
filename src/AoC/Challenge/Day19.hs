@@ -30,28 +30,29 @@ data Workflow = Rejected
               | Named String
   deriving (Eq, Generic, NFData, Show)
 
-type Rule = ((Part -> Bool), Workflow)
-
-data Instruction = Instruction { name :: String, rules :: [Rule] }
+data Rule = Rule { condition :: (Part -> Bool), target :: Workflow }
   deriving (Generic, NFData)
 
-instructionParser :: MP.Parsec Void String Instruction
+newtype Instruction = Instruction { rules :: [Rule] }
+  deriving (Generic, NFData)
+
+instructionParser :: MP.Parsec Void String (String, Instruction)
 instructionParser = do
   name <- MP.takeWhile1P (Just "name") (isLower)
   MP.char '{'
   rules <- MP.sepBy ruleParser (MP.char ',')
   MP.char '}'
-  pure $ Instruction name rules
+  pure (name, Instruction rules)
   where
     ruleParser :: MP.Parsec Void String Rule
     ruleParser = do
       condition <- MP.choice [MP.try conditionParser, (pure (const True))]
-      workflow <- MP.choice [
+      target <- MP.choice [
         Rejected <$ MP.char 'R',
         Accepted <$ MP.char 'A',
         Named <$> MP.takeWhile1P (Just "workflow") (isLower)
         ]
-      pure (condition, workflow)
+      pure $ Rule condition target
 
     conditionParser :: MP.Parsec Void String (Part -> Bool)
     conditionParser = do
@@ -82,7 +83,7 @@ inputParser :: MP.Parsec Void String (Map String Instruction, [Part])
 inputParser = do
   instructions <- MP.many (instructionParser <* MP.space)
   parts <- MP.sepBy partParser (MP.char '\n')
-  pure (M.fromList ((\i -> (i.name, i)) <$> instructions), parts)
+  pure (M.fromList instructions, parts)
 
 parse :: String -> Either String (Map String Instruction, [Part])
 parse =
@@ -100,7 +101,7 @@ accept instrs p =
         Named x -> go (instrs M.! x)
 
     evalRules :: [Rule] -> Workflow
-    evalRules ((cond, tgt) : rest) = if cond p then tgt else evalRules rest
+    evalRules (r : rest) = if r.condition p then r.target else evalRules rest
     evalRules _ = error "Rule with no default case"
       
 solveA :: (Map String Instruction, [Part]) -> Int
