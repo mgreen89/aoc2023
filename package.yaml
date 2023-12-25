@@ -43,6 +43,7 @@ dependencies:
   - parser-combinators
   - primitive
   - psqueues
+  - random
   - recursion-schemes
   - safe
   - semigroupoids

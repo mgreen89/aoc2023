@@ -12,13 +12,13 @@ where
 import AoC.Common.Point (inBoundingBox)
 import AoC.Solution
 import Data.Bifunctor (first)
+import Data.List (tails, uncons)
+import Data.Maybe (mapMaybe)
 import Data.Void (Void)
 import Linear (V2 (..), V3 (..))
 import qualified Text.Megaparsec as MP
 import qualified Text.Megaparsec.Char as MP
 import qualified Text.Megaparsec.Char.Lexer as MPL
-import Data.List (tails, uncons)
-import Data.Maybe (mapMaybe)
 
 lineParser :: MP.Parsec Void String (V3 Int, V3 Int)
 lineParser = do
@@ -57,9 +57,9 @@ type Info = ((V2 Int, V2 Int), V2 Double)
 solveA :: [(V3 Int, V3 Int)] -> Int
 solveA inp =
   sum
-  . fmap (length . filter id . intersectInRange)
-  . mapMaybe uncons
-  $ tails ls
+    . fmap (length . filter id . intersectInRange)
+    . mapMaybe uncons
+    $ tails ls
   where
     to2d :: (V3 a, V3 a) -> (V2 a, V2 a)
     to2d (V3 px py _, V3 vx vy _) = (V2 px py, V2 vx vy)
