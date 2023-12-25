@@ -1,118 +1,210 @@
-{-# LANGUAGE PartialTypeSignatures #-}
-{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
-{-# OPTIONS_GHC -Wno-unused-imports #-}
-{-# OPTIONS_GHC -Wno-unused-top-binds #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE TemplateHaskell #-}
 
-module AoC.Challenge.Day19 (
-  day19a,
+module AoC.Challenge.Day19
+  ( day19a,
+    day19b,
   )
 where
 
--- , day19b
-
 import AoC.Solution
 import Control.DeepSeq (NFData)
+import Control.Lens (Lens', (&), (.~), (^.))
+import Control.Lens.TH (makeLenses)
 import Data.Bifunctor (first)
 import Data.Char (isLower)
+import Data.Foldable (foldl')
+import Data.Interval (Boundary (..), Interval)
+import qualified Data.Interval as IV
+import Data.IntervalSet (IntervalSet)
+import qualified Data.IntervalSet as IVS
 import Data.Map (Map)
 import qualified Data.Map as M
+import Data.Maybe (fromMaybe)
 import Data.Void (Void)
 import GHC.Generics (Generic)
 import qualified Text.Megaparsec as MP
 import qualified Text.Megaparsec.Char as MP
 import qualified Text.Megaparsec.Char.Lexer as MPL
 
-data Part = Part { x :: Int, m :: Int, a :: Int, s :: Int }
+data Part a = Part {_x :: a, _m :: a, _a :: a, _s :: a}
   deriving (Eq, Generic, NFData, Show)
 
-data Workflow = Rejected
-              | Accepted
-              | Named String
+makeLenses ''Part
+
+data Category = X | M | A | S
   deriving (Eq, Generic, NFData, Show)
 
-data Rule = Rule { condition :: (Part -> Bool), target :: Workflow }
-  deriving (Generic, NFData)
+lensOfC :: Category -> Lens' (Part a) a
+lensOfC X = x
+lensOfC M = m
+lensOfC A = a
+lensOfC S = s
 
-newtype Instruction = Instruction { rules :: [Rule] }
-  deriving (Generic, NFData)
+data Comparator = Lt | Gt
+  deriving (Eq, Generic, NFData, Show)
 
-instructionParser :: MP.Parsec Void String (String, Instruction)
+data Test = Test
+  { _category :: Category,
+    _comparator :: Comparator,
+    _threshold :: Int
+  }
+  deriving (Eq, Generic, NFData, Show)
+
+makeLenses ''Test
+
+data Workflow
+  = Rejected
+  | Accepted
+  | Named String
+  deriving (Eq, Generic, NFData, Show)
+
+data Rule
+  = Condition Test Workflow
+  | Always Workflow
+  deriving (Eq, Generic, NFData, Show)
+
+instructionParser :: MP.Parsec Void String (String, [Rule])
 instructionParser = do
-  name <- MP.takeWhile1P (Just "name") (isLower)
+  name <- MP.takeWhile1P (Just "name") isLower
   MP.char '{'
   rules <- MP.sepBy ruleParser (MP.char ',')
   MP.char '}'
-  pure (name, Instruction rules)
+  pure (name, rules)
   where
     ruleParser :: MP.Parsec Void String Rule
     ruleParser = do
-      condition <- MP.choice [MP.try conditionParser, (pure (const True))]
-      target <- MP.choice [
-        Rejected <$ MP.char 'R',
-        Accepted <$ MP.char 'A',
-        Named <$> MP.takeWhile1P (Just "workflow") (isLower)
-        ]
-      pure $ Rule condition target
+      ruleConstructor <- MP.choice [Condition <$> MP.try testParser, pure Always]
+      target <-
+        MP.choice
+          [ Rejected <$ MP.char 'R',
+            Accepted <$ MP.char 'A',
+            Named <$> MP.takeWhile1P (Just "workflow") isLower
+          ]
+      pure $ ruleConstructor target
 
-    conditionParser :: MP.Parsec Void String (Part -> Bool)
-    conditionParser = do
-      getter <- MP.choice [
-        (.x) <$ MP.char 'x',
-        (.m) <$ MP.char 'm',
-        (.a) <$ MP.char 'a',
-        (.s) <$ MP.char 's'
-        ]
-      test <- MP.choice [
-        (<) <$ MP.char '<',
-        (>) <$ MP.char '>'
-        ]
-      val <- MPL.decimal
-      MP.char ':'
-      pure $ ((`test` val) . getter)
+    testParser :: MP.Parsec Void String Test
+    testParser =
+      Test
+        <$> MP.choice [X <$ MP.char 'x', M <$ MP.char 'm', A <$ MP.char 'a', S <$ MP.char 's']
+        <*> MP.choice [Lt <$ MP.char '<', Gt <$ MP.char '>']
+        <*> MPL.decimal
+        <* MP.char ':'
 
-partParser :: MP.Parsec Void String Part
-partParser = do
-  MP.char '{'
-  x <- MP.string "x=" *> MPL.decimal <* MP.char ','
-  m <- MP.string "m=" *> MPL.decimal <* MP.char ','
-  a <- MP.string "a=" *> MPL.decimal <* MP.char ','
-  s <- MP.string "s=" *> MPL.decimal <* MP.char '}'
-  pure $ Part x m a s
+partParser :: MP.Parsec Void String (Part Int)
+partParser =
+  Part
+    <$> (MP.string "{x=" *> MPL.decimal <* MP.char ',')
+    <*> (MP.string "m=" *> MPL.decimal <* MP.char ',')
+    <*> (MP.string "a=" *> MPL.decimal <* MP.char ',')
+    <*> (MP.string "s=" *> MPL.decimal <* MP.char '}')
 
-inputParser :: MP.Parsec Void String (Map String Instruction, [Part])
+inputParser :: MP.Parsec Void String (Map String [Rule], [Part Int])
 inputParser = do
   instructions <- MP.many (instructionParser <* MP.space)
   parts <- MP.sepBy partParser (MP.char '\n')
   pure (M.fromList instructions, parts)
 
-parse :: String -> Either String (Map String Instruction, [Part])
+parse :: String -> Either String (Map String [Rule], [Part Int])
 parse =
   first MP.errorBundlePretty . MP.parse inputParser "day19"
 
-accept :: Map String Instruction -> Part -> Bool
-accept instrs p =
-  go (instrs M.! "in")
+applyRule :: Part Int -> Rule -> Maybe Workflow
+applyRule _ (Always dest) = Just dest
+applyRule part (Condition test dest) =
+  let cond = case test ^. comparator of
+        Lt -> (<)
+        Gt -> (>)
+      l = lensOfC (test ^. category)
+   in if cond (part ^. l) (test ^. threshold)
+        then Just dest
+        else Nothing
+
+applyWorkflow :: Part Int -> [Rule] -> Workflow
+applyWorkflow _ [] = error "Rule without default"
+applyWorkflow part (w : ws) =
+  fromMaybe (applyWorkflow part ws) (applyRule part w)
+
+applyWorkflows :: String -> Map String [Rule] -> Part Int -> Workflow
+applyWorkflows name rules part =
+  case applyWorkflow part (rules M.! name) of
+    Named name' -> applyWorkflows name' rules part
+    dest -> dest
+
+solveA :: (Map String [Rule], [Part Int]) -> Int
+solveA (wfs, ps) =
+  sum . fmap rating . filter ((== Accepted) . applyWorkflows "in" wfs) $ ps
   where
-    go :: Instruction -> Bool
-    go i =
-      case evalRules i.rules of
-        Rejected -> False
-        Accepted -> True
-        Named x -> go (instrs M.! x)
+    rating :: Part Int -> Int
+    rating p = sum [p ^. x, p ^. m, p ^. a, p ^. s]
 
-    evalRules :: [Rule] -> Workflow
-    evalRules (r : rest) = if r.condition p then r.target else evalRules rest
-    evalRules _ = error "Rule with no default case"
-      
-solveA :: (Map String Instruction, [Part]) -> Int
-solveA (instrs, ps) =
-  sum . fmap rating . filter (accept instrs) $ ps
+day19a :: Solution (Map String [Rule], [Part Int]) Int
+day19a = Solution {sParse = parse, sShow = show, sSolve = Right . solveA}
+
+type RangePart = Part (IntervalSet Int)
+
+emptyRangePart :: RangePart
+emptyRangePart = Part IVS.empty IVS.empty IVS.empty IVS.empty
+
+anyEmpty :: RangePart -> Bool
+anyEmpty rp = any IVS.null [rp ^. x, rp ^. m, rp ^. a, rp ^. s]
+
+ivSize :: Interval Int -> Int
+ivSize iv =
+  case (IV.lowerBound' iv, IV.upperBound' iv) of
+    ((IV.Finite l, lb), (IV.Finite u, ub)) ->
+      let lbreal = case lb of
+            Open -> l + 1
+            Closed -> l
+          ubreal = case ub of
+            Open -> u - 1
+            Closed -> u
+       in ubreal - lbreal + 1
+    _ -> error "Infinite interval!"
+
+ivsSize :: IntervalSet Int -> Int
+ivsSize = sum . fmap ivSize . IVS.toList
+
+possibilities :: RangePart -> Int
+possibilities rp = product $ ivsSize <$> [rp ^. x, rp ^. m, rp ^. a, rp ^. s]
+
+applyRange :: Test -> RangePart -> (RangePart, RangePart)
+applyRange test rp =
+  let testRange = IVS.singleton $ case test ^. comparator of
+        Lt -> IV.Finite 1 IV.<=..< IV.Finite (test ^. threshold)
+        Gt -> IV.Finite (test ^. threshold) IV.<..<= IV.Finite 4000
+
+      (intersection, difference) =
+        ( IVS.intersection (rp ^. l) testRange,
+          IVS.difference (rp ^. l) testRange
+        )
+
+      -- This needs a type signature to compile.
+      l :: Lens' (Part (IntervalSet Int)) (IntervalSet Int)
+      l = lensOfC (test ^. category)
+   in (rp & l .~ intersection, rp & l .~ difference)
+
+solveB :: Map String [Rule] -> Int
+solveB wfs =
+  go (wfs M.! "in") 0 (Part fullRange fullRange fullRange fullRange)
   where
-    rating :: Part -> Int
-    rating p = p.x + p.m + p.a + p.s
+    fullRange = IVS.singleton (IV.Finite 1 IV.<=..<= IV.Finite 4000)
 
-day19a :: Solution (Map String Instruction, [Part]) Int
-day19a = Solution{sParse = parse, sShow = show, sSolve = Right . solveA}
+    go :: [Rule] -> Int -> RangePart -> Int
+    go ri acc rp =
+      fst $ foldl' go' (acc, rp) ri
 
-day19b :: Solution _ _
-day19b = Solution{sParse = Right, sShow = show, sSolve = Right}
+    go' :: (Int, RangePart) -> Rule -> (Int, RangePart)
+    go' (acc, rp) r =
+      let ((is, df), dest) = case r of
+            Condition test d -> (applyRange test rp, d)
+            Always d -> ((rp, emptyRangePart), d)
+       in if anyEmpty is
+            then (acc, df)
+            else case dest of
+              Rejected -> (acc, df)
+              Accepted -> (acc + possibilities is, df)
+              Named w -> (go (wfs M.! w) acc is, df)
+
+day19b :: Solution (Map String [Rule]) Int
+day19b = Solution {sParse = fmap fst . parse, sShow = show, sSolve = Right . solveB}
