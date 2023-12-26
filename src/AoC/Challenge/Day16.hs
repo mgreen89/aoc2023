@@ -44,17 +44,17 @@ parse =
     . lines
 
 energise :: Map Point Elem -> (Point, Dir) -> Int
-energise m (p, d) =
-  S.size . S.map fst . snd $ fill ((p, d), S.empty)
+energise m start =
+  S.size . S.map fst . snd $ fill (start, S.empty)
   where
     (V2 xMin yMin) = foldl' (liftA2 min) 0 $ M.keys m
     (V2 xMax yMax) = foldl' (liftA2 max) 0 $ M.keys m
 
     fill :: ((Point, Dir), Set (Point, Dir)) -> ((Point, Dir), Set (Point, Dir))
-    fill ((p@(V2 x y), d), s)
-      | x < xMin || y < yMin = ((p, d), s)
-      | x > xMax || y > yMax = ((p, d), s)
-      | otherwise = step ((p, d), s)
+    fill inp@((V2 x y, _), _)
+      | x < xMin || y < yMin = inp
+      | x > xMax || y > yMax = inp
+      | otherwise = step inp
 
     step :: ((Point, Dir), Set (Point, Dir)) -> ((Point, Dir), Set (Point, Dir))
     step ((p, d), s) =
