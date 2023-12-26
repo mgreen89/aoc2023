@@ -11,6 +11,7 @@ import AoC.Solution
 import Control.DeepSeq (NFData)
 import Control.Lens (Lens', (&), (.~), (^.))
 import Control.Lens.TH (makeLenses)
+import Control.Monad (guard)
 import Data.Bifunctor (first)
 import Data.Char (isLower)
 import Data.Foldable (foldl')
@@ -31,6 +32,9 @@ data Part a = Part {_x :: a, _m :: a, _a :: a, _s :: a}
   deriving (Eq, Generic, NFData, Show)
 
 makeLenses ''Part
+
+allParts :: Part a -> [a]
+allParts p = (p ^.) <$> [x, m, a, s]
 
 data Category = X | M | A | S
   deriving (Eq, Generic, NFData, Show)
@@ -116,9 +120,7 @@ applyRule part (Condition test dest) =
         Lt -> (<)
         Gt -> (>)
       l = lensOfC (test ^. category)
-   in if cond (part ^. l) (test ^. threshold)
-        then Just dest
-        else Nothing
+   in dest <$ guard (cond (part ^. l) (test ^. threshold))
 
 applyWorkflow :: Part Int -> [Rule] -> Workflow
 applyWorkflow _ [] = error "Rule without default"
@@ -136,7 +138,7 @@ solveA (wfs, ps) =
   sum . fmap rating . filter ((== Accepted) . applyWorkflows "in" wfs) $ ps
   where
     rating :: Part Int -> Int
-    rating p = sum [p ^. x, p ^. m, p ^. a, p ^. s]
+    rating = sum . allParts
 
 day19a :: Solution (Map String [Rule], [Part Int]) Int
 day19a = Solution {sParse = parse, sShow = show, sSolve = Right . solveA}
@@ -147,7 +149,7 @@ emptyRangePart :: RangePart
 emptyRangePart = Part IVS.empty IVS.empty IVS.empty IVS.empty
 
 anyEmpty :: RangePart -> Bool
-anyEmpty rp = any IVS.null [rp ^. x, rp ^. m, rp ^. a, rp ^. s]
+anyEmpty = any IVS.null . allParts
 
 ivSize :: Interval Int -> Int
 ivSize iv =
@@ -168,8 +170,9 @@ ivsSize = sum . fmap ivSize . IVS.toList
 possibilities :: RangePart -> Int
 possibilities rp = product $ ivsSize <$> [rp ^. x, rp ^. m, rp ^. a, rp ^. s]
 
-applyRange :: Test -> RangePart -> (RangePart, RangePart)
-applyRange test rp =
+applyRangeRule :: Rule -> RangePart -> ((RangePart, RangePart), Workflow)
+applyRangeRule (Always w) rp = ((rp, emptyRangePart), w)
+applyRangeRule (Condition test w) rp =
   let testRange = IVS.singleton $ case test ^. comparator of
         Lt -> IV.Finite 1 IV.<=..< IV.Finite (test ^. threshold)
         Gt -> IV.Finite (test ^. threshold) IV.<..<= IV.Finite 4000
@@ -182,7 +185,7 @@ applyRange test rp =
       -- This needs a type signature to compile.
       l :: Lens' (Part (IntervalSet Int)) (IntervalSet Int)
       l = lensOfC (test ^. category)
-   in (rp & l .~ intersection, rp & l .~ difference)
+   in ((rp & l .~ intersection, rp & l .~ difference), w)
 
 solveB :: Map String [Rule] -> Int
 solveB wfs =
@@ -191,20 +194,20 @@ solveB wfs =
     fullRange = IVS.singleton (IV.Finite 1 IV.<=..<= IV.Finite 4000)
 
     go :: [Rule] -> Int -> RangePart -> Int
-    go ri acc rp =
-      fst $ foldl' go' (acc, rp) ri
+    go rules acc part =
+      fst $ foldl' go' (acc, part) rules
 
     go' :: (Int, RangePart) -> Rule -> (Int, RangePart)
-    go' (acc, rp) r =
-      let ((is, df), dest) = case r of
-            Condition test d -> (applyRange test rp, d)
-            Always d -> ((rp, emptyRangePart), d)
-       in if anyEmpty is
-            then (acc, df)
-            else case dest of
-              Rejected -> (acc, df)
-              Accepted -> (acc + possibilities is, df)
-              Named w -> (go (wfs M.! w) acc is, df)
+    go' (acc, part) rule =
+      let ((intersection, difference), wf) = applyRangeRule rule part
+       in ( if anyEmpty intersection
+              then acc
+              else case wf of
+                Rejected -> acc
+                Accepted -> acc + possibilities intersection
+                Named w -> go (wfs M.! w) acc intersection,
+            difference
+          )
 
 day19b :: Solution (Map String [Rule]) Int
 day19b = Solution {sParse = fmap fst . parse, sShow = show, sSolve = Right . solveB}
