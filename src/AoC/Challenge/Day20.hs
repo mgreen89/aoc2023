@@ -1,28 +1,23 @@
-{-# LANGUAGE PartialTypeSignatures #-}
-{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
-{-# OPTIONS_GHC -Wno-unused-imports #-}
-{-# OPTIONS_GHC -Wno-unused-top-binds #-}
-
 module AoC.Challenge.Day20
   ( day20a,
+    day20b,
   )
 where
-
--- , day20b
 
 import AoC.Solution
 import Control.DeepSeq (NFData)
 import Data.Bifunctor (first)
 import Data.Char (isAsciiLower)
+import Data.Foldable (foldl', toList)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
+import Data.Maybe (listToMaybe, mapMaybe)
 import Data.Sequence (Seq, ViewL (..))
 import qualified Data.Sequence as Seq
 import Data.Void (Void)
 import GHC.Generics (Generic)
 import qualified Text.Megaparsec as MP
 import qualified Text.Megaparsec.Char as MP
-import qualified Text.Megaparsec.Char.Lexer as MPL
 
 newtype FlipFlopState = FFS {on :: Bool}
   deriving (Generic, NFData, Show)
@@ -78,62 +73,100 @@ parse =
                   $ mp
            in Conjunction (CS allLow)
 
-data State = State
-  { dests :: Map String [String],
-    states :: Map String ModuleState,
-    pulses :: Seq (String, String, Bool), -- (From, To, High?)
-    nHigh :: Int,
-    nLow :: Int
+data Pulse = Pulse
+  { from :: String,
+    to :: String,
+    high :: Bool
   }
   deriving (Show)
 
-solveA :: Map String [String] -> Map String ModuleState -> Int
-solveA destMap stateMap =
-  (\s -> s.nHigh * s.nLow)
-    . (!! 1000)
-    . iterate pushButton
-    $ State destMap stateMap Seq.empty 0 0
-  where
-    pushButton :: State -> State
-    pushButton s =
-      go $ s {pulses = ("button", "broadcaster", False) Seq.<| s.pulses}
+data State = State
+  { dests :: Map String [String],
+    states :: Map String ModuleState,
+    pulses :: Seq Pulse,
+    history :: Seq Pulse
+  }
+  deriving (Show)
 
+initialState :: Map String [String] -> Map String ModuleState -> State
+initialState dests states = State dests states Seq.empty Seq.empty
+
+pushButton :: State -> State
+pushButton state =
+  go $ state {pulses = Pulse "button" "broadcaster" False Seq.<| state.pulses}
+  where
     go :: State -> State
     go s =
       case Seq.viewl s.pulses of
-        ((p, d, h) Seq.:< ps) ->
-          let s' =
-                s
-                  { pulses = ps,
-                    nHigh = s.nHigh + (if h then 1 else 0),
-                    nLow = s.nLow + (if h then 0 else 1)
-                  }
-              addPulses isH = ps Seq.>< Seq.fromList [(d, x, isH) | x <- s.dests M.! d]
-           in maybe
-                (go s')
-                ( go . \case
-                    Broadcast -> s' {pulses = addPulses h}
-                    FlipFlop ffs ->
-                      if h
-                        then s'
-                        else
-                          let ffs' = FFS {on = not ffs.on}
-                              m' = M.insert d (FlipFlop ffs') s.states
-                           in if ffs'.on
-                                then s' {states = m', pulses = addPulses True}
-                                else s' {states = m', pulses = addPulses False}
-                    Conjunction cs ->
-                      let cs' = M.insert p h cs.mem
-                          m' = M.insert d (Conjunction (CS cs')) s.states
-                       in if and (M.elems cs')
-                            then s' {states = m', pulses = addPulses False}
-                            else s' {states = m', pulses = addPulses True}
-                )
-                (M.lookup d s.states)
+        (pulse Seq.:< ps) ->
+          let s' = s {pulses = ps, history = s.history Seq.|> pulse}
+              addPulses high = ps Seq.>< Seq.fromList [Pulse pulse.to to high | to <- s.dests M.! pulse.to]
+           in go $
+                maybe
+                  s'
+                  ( \case
+                      Broadcast -> s' {pulses = addPulses pulse.high}
+                      FlipFlop ffs ->
+                        if pulse.high
+                          then s'
+                          else
+                            let ffs' = FFS {on = not ffs.on}
+                                m' = M.insert pulse.to (FlipFlop ffs') s.states
+                             in if ffs'.on
+                                  then s' {states = m', pulses = addPulses True}
+                                  else s' {states = m', pulses = addPulses False}
+                      Conjunction cs ->
+                        let cs' = M.insert pulse.from pulse.high cs.mem
+                            m' = M.insert pulse.to (Conjunction (CS cs')) s.states
+                         in if and (M.elems cs')
+                              then s' {states = m', pulses = addPulses False}
+                              else s' {states = m', pulses = addPulses True}
+                  )
+                  (M.lookup pulse.to s.states)
         EmptyL -> s
+
+solveA :: Map String [String] -> Map String ModuleState -> Int
+solveA destMap stateMap =
+  uncurry (*)
+    . foldl' getHighLow (0, 0)
+    . (.history)
+    . (!! 1000)
+    . iterate pushButton
+    $ initialState destMap stateMap
+  where
+    getHighLow :: (Int, Int) -> Pulse -> (Int, Int)
+    getHighLow (h, l) p = if p.high then (h + 1, l) else (h, l + 1)
 
 day20a :: Solution (Map String [String], Map String ModuleState) Int
 day20a = Solution {sParse = parse, sShow = show, sSolve = Right . uncurry solveA}
 
-day20b :: Solution _ _
-day20b = Solution {sParse = Right, sShow = show, sSolve = Right}
+{-
+  From a manual inspection of the input, there are four inputs to the
+  final rx input.
+  Do each of these cycle and need to find LCM?
+
+  kh feeds rx
+  pv, qh, xm and hz feed kh.
+  Let's start by running a few iterations and seeing when they flip.
+
+  On inspection, they do cycle.
+  They are also all cycle before any reach two, so just iterate
+  until they'll all cycle (should be <5k, but do <10k to be sure) and
+  get the LCM of their entries.
+-}
+
+solveB :: Map String [String] -> Map String ModuleState -> Int
+solveB destMap stateMap =
+  foldl' lcm 1
+    . fmap fst
+    . take 4
+    . mapMaybe (\(i, (_, h)) -> listToMaybe [(i, x) | x <- wanted, q <- h, x == q.from, q.high])
+    . zip [0 ..]
+    . take 10000
+    . iterate (\(s, _) -> let s' = pushButton s in (s' {history = Seq.empty}, toList s'.history))
+    $ (initialState destMap stateMap, [])
+  where
+    wanted = ["pv", "qh", "xm", "hz"]
+
+day20b :: Solution (Map String [String], Map String ModuleState) Int
+day20b = Solution {sParse = parse, sShow = show, sSolve = Right . uncurry solveB}
