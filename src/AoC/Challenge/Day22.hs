@@ -12,6 +12,8 @@ import Data.List (nub, sortOn)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Maybe (fromMaybe)
+import Data.Set (Set)
+import qualified Data.Set as S
 import Data.Void (Void)
 import Linear (V2 (..), V3 (..), _z)
 import qualified Text.Megaparsec as MP
@@ -84,8 +86,30 @@ solveB bs =
     settled :: Map Block [Block]
     settled = fst $ settle bs
 
+    blockToSupported :: Map Block [Block]
+    blockToSupported =
+      M.foldlWithKey' go M.empty settled
+      where
+        go a b = M.unionWith (++) a . M.fromList . fmap (,[b])
+
     fallCount :: Block -> Int
-    fallCount b = snd . settle . filter (/= b) . M.keys $ settled
+    fallCount b =
+      S.size
+        . S.delete b
+        . getAllFalling (S.singleton b)
+        . fromMaybe []
+        $ blockToSupported M.!? b
+
+    getAllFalling :: Set Block -> [Block] -> Set Block
+    getAllFalling falling consider =
+      let newlyFalling = filter (\b -> all (`S.member` falling) (settled M.! b)) consider
+          falling' = S.union falling . S.fromList $ newlyFalling
+       in if null newlyFalling
+            then falling
+            else
+              getAllFalling falling'
+                . concatMap (fromMaybe [] . (blockToSupported M.!?))
+                $ newlyFalling
 
 day22b :: Solution [Block] Int
 day22b = Solution {sParse = parse, sShow = show, sSolve = Right . solveB}
