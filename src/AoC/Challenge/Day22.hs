@@ -1,13 +1,8 @@
-{-# LANGUAGE PartialTypeSignatures #-}
-{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
-{-# OPTIONS_GHC -Wno-unused-top-binds #-}
-
 module AoC.Challenge.Day22
   ( day22a,
+    day22b,
   )
 where
-
--- , day22b
 
 import AoC.Solution
 import Control.Lens ((&), (.~), (^.))
@@ -45,30 +40,36 @@ getXYs (V3 x1 y1 _, V3 x2 y2 _)
   | y1 /= y2 = [V2 x1 y | y <- [y1 .. y2]]
   | otherwise = [V2 x1 y1]
 
--- Settle the blocks, and return a map of settle block to blocks that support it.
-settle :: [Block] -> Map Block [Block]
+-- Settle the blocks, and return:
+--  - a map of settled block to blocks that support it.
+--  - the number of bricks that fell.
+--
+-- The 'ground' is represented as a single block at the origin.
+settle :: [Block] -> (Map Block [Block], Int)
 settle =
-  snd . foldl' go (M.empty, M.empty) . sortOn ((^. _z) . fst)
+  snd . foldl' go (M.empty, (M.empty, 0)) . sortOn ((^. _z) . fst)
   where
     go ::
-      (Map (V2 Int) (Int, Block), Map Block [Block]) ->
+      (Map (V2 Int) (Int, Block), (Map Block [Block], Int)) ->
       Block ->
-      (Map (V2 Int) (Int, Block), Map Block [Block])
-    go (highMap, supportMap) b@(b1@(V3 _ _ z1), b2@(V3 _ _ z2)) =
+      (Map (V2 Int) (Int, Block), (Map Block [Block], Int))
+    go (highMap, (supportMap, count)) b@(b1@(V3 _ _ z1), b2@(V3 _ _ z2)) =
       let xys = getXYs b
           possSupports = nub . fmap (fromMaybe (0, (0, 0)) . (highMap M.!?)) $ xys
           z' = (+ 1) . maximum . fmap fst $ possSupports
           supports = nub . fmap snd $ filter ((== (z' - 1)) . fst) possSupports
           b' = (b1 & _z .~ z', b2 & _z .~ (z' + z2 - z1))
           newHeights = M.fromList . fmap (,(z' + z2 - z1, b')) $ xys
-       in (M.union newHeights highMap, M.insert b' supports supportMap)
+       in ( M.union newHeights highMap,
+            (M.insert b' supports supportMap, if b' == b then count else count + 1)
+          )
 
 solveA :: [Block] -> Int
 solveA bs =
   length . filter id . fmap couldDisintegrate . M.keys $ settled
   where
     settled :: Map Block [Block]
-    settled = settle bs
+    settled = fst $ settle bs
 
     couldDisintegrate :: Block -> Bool
     couldDisintegrate b = not . or . M.elems . M.map (== [b]) $ settled
@@ -76,5 +77,15 @@ solveA bs =
 day22a :: Solution [Block] Int
 day22a = Solution {sParse = parse, sShow = show, sSolve = Right . solveA}
 
-day22b :: Solution _ _
-day22b = Solution {sParse = Right, sShow = show, sSolve = Right}
+solveB :: [Block] -> Int
+solveB bs =
+  sum . fmap fallCount $ M.keys settled
+  where
+    settled :: Map Block [Block]
+    settled = fst $ settle bs
+
+    fallCount :: Block -> Int
+    fallCount b = snd . settle . filter (/= b) . M.keys $ settled
+
+day22b :: Solution [Block] Int
+day22b = Solution {sParse = parse, sShow = show, sSolve = Right . solveB}
