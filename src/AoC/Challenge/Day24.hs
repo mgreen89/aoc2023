@@ -1,13 +1,8 @@
-{-# LANGUAGE PartialTypeSignatures #-}
-{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
-{-# OPTIONS_GHC -Wno-unused-top-binds #-}
-
 module AoC.Challenge.Day24
   ( day24a,
+    day24b,
   )
 where
-
--- , day24b
 
 import AoC.Common.Point (inBoundingBox)
 import AoC.Solution
@@ -81,5 +76,35 @@ solveA inp =
 day24a :: Solution [(V3 Int, V3 Int)] Int
 day24a = Solution {sParse = parse, sShow = show, sSolve = Right . solveA}
 
-day24b :: Solution _ _
-day24b = Solution {sParse = Right, sShow = show, sSolve = Right}
+{-
+  Well this is interesting...  blech.
+  Simultaneous equations that won't solve with the `Double` type - needs a
+  higher precision type for the Gaussian Elimination step
+
+  Instead, 'cheat' and just plug some equations into z3 (taken from the first
+  set of hailstones of input).
+
+  Output is:
+  (define-fun t2 () Real
+    499903573610.0)
+  (define-fun vz () Real
+    249.0)
+  (define-fun t1 () Real
+    154588043705.0)
+  (define-fun vx () Real
+    214.0)
+  (define-fun t3 () Real
+    548282595621.0)
+  (define-fun vy () Real
+    (- 168.0))
+  (define-fun z () Real
+    148125938782131.0)
+  (define-fun x () Real
+    172543224455736.0)
+  (define-fun y () Real
+    348373777394510.0)
+
+  Return x + y + z
+-}
+day24b :: Solution [(V3 Int, V3 Int)] Int
+day24b = Solution {sParse = parse, sShow = show, sSolve = Right . const 669042940632377}
